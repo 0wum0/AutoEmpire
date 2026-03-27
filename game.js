@@ -4207,15 +4207,28 @@ window.loadGame = function() {
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         const res = await fetch('api.php?action=init');
-        const data = await res.json();
+        const textData = await res.text();
+        let data;
+        try {
+            data = JSON.parse(textData);
+        } catch(parsErr) {
+            console.error("API Response was not JSON:", textData);
+            document.body.innerHTML += '<div style="position:fixed;top:10px;left:10px;background:red;color:white;padding:10px;z-index:999999;">API Fehler: ' + textData.substring(0, 200) + '</div>';
+            if(typeof buildCompanySelection==='function') buildCompanySelection();
+            return;
+        }
         
-        // Restore globals
-        window.VEHS = eval('[' + data.configs.VEHS + ']');
-        window.COMPS = eval('[' + data.configs.COMPS + ']');
-        window.RD = eval('[' + (data.configs.RD || '') + ']');
-        window.EVENTS = eval('[' + (data.configs.EVENTS || '') + ']');
-        window.ADS = eval('[' + (data.configs.ADS || '') + ']');
-        window.CEO_POOL = eval('[' + (data.configs.CEO_POOL || '') + ']');
+        if (data.error) {
+            document.body.innerHTML += '<div style="position:fixed;top:10px;left:10px;background:red;color:white;padding:10px;z-index:999999;">Backend Fehler: ' + data.error + '</div>';
+        }
+
+        // Restore globals with fallbacks
+        window.VEHS = data.configs && data.configs.VEHS ? eval('[' + data.configs.VEHS + ']') : [];
+        window.COMPS = data.configs && data.configs.COMPS ? eval('[' + data.configs.COMPS + ']') : [];
+        window.RD = data.configs && data.configs.RD ? eval('[' + data.configs.RD + ']') : [];
+        window.EVENTS = data.configs && data.configs.EVENTS ? eval('[' + data.configs.EVENTS + ']') : [];
+        window.ADS = data.configs && data.configs.ADS ? eval('[' + data.configs.ADS + ']') : [];
+        window.CEO_POOL = data.configs && data.configs.CEO_POOL ? eval('[' + data.configs.CEO_POOL + ']') : [];
         
         // Multiplayer Rivals
         window.RIVALS = data.multiplayer_rivals || [];
@@ -4241,6 +4254,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         
     } catch (e) {
         console.error("Multiplayer Init Fehler: ", e);
+        document.body.innerHTML += '<div style="position:fixed;top:50px;left:10px;background:orange;color:white;padding:10px;z-index:999999;">Kritischer Fehler: ' + e.message + '</div>';
+        if(typeof buildCompanySelection==='function') buildCompanySelection();
     }
 });
 
