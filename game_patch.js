@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════
-//  AUTO EMPIRE — BOOTSTRAP PATCH
+//  AUTO EMPIRE — BOOTSTRAP PATCH (v2 — Theme-aware)
 //  Muss NACH game.js geladen werden.
 //  Behebt alle kritischen Rendering-Bugs.
 // ══════════════════════════════════════════════════════
@@ -8,22 +8,16 @@
   'use strict';
 
   // ── PATCH 1: Stabile sv()-Funktion ──
-  // Das Original wird mehrfach überschrieben und bricht dabei.
-  // Diese finale Version ist die einzige die zählt.
   window.sv = function(viewId, btn) {
-    // Alle Views ausblenden
     document.querySelectorAll('.view').forEach(function(v) {
       v.classList.remove('on');
     });
-    // Ziel-View einblenden
     var tgt = document.getElementById('v-' + viewId);
     if (tgt) tgt.classList.add('on');
 
-    // Alle Sub-Nav Buttons deaktivieren
     document.querySelectorAll('.nsb').forEach(function(b) {
       b.classList.remove('on');
     });
-    // Aktiven Button markieren
     if (btn) {
       btn.classList.add('on');
     } else {
@@ -31,14 +25,12 @@
       if (sel) sel.classList.add('on');
     }
 
-    // Tab-Render auslösen
     try {
       if (typeof _barCache !== 'undefined') _barCache = {};
       if (typeof _lastVid !== 'undefined') _lastVid = '';
       if (typeof doTabRender === 'function') doTabRender(viewId);
     } catch(e) { console.warn('doTabRender error:', e); }
 
-    // Scroll zurücksetzen
     var content = document.getElementById('content');
     if (content) content.scrollTop = 0;
   };
@@ -75,7 +67,6 @@
   };
 
   // ── PATCH 3: Company Select Handler ──
-  // Verhindert Konflikt zwischen DOMContentLoaded in game.js und init()
   function setupCompanySelect() {
     var hasSave = false;
     try { hasSave = !!localStorage.getItem('ae_v8_save'); } catch(e) {}
@@ -96,31 +87,52 @@
   function initializeUI() {
     setupCompanySelect();
 
-    // Sub-Nav für Zentrale aufbauen
     var firstCatBtn = document.querySelector('.nc.on') || document.querySelector('.nc');
     if (firstCatBtn) {
       window.setNavCat('zentrale', firstCatBtn);
     }
 
-    // Dashboard explizit als erste View setzen
     document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('on'); });
     var dash = document.getElementById('v-dash');
     if (dash) dash.classList.add('on');
 
-    // Vollständigen Render anstoßen
     try {
       if (typeof renderAll === 'function') renderAll();
     } catch(e) { console.warn('renderAll error:', e); }
 
-    // RAF-Cache leeren für sauberen Start
     try { if (typeof _barCache !== 'undefined') _barCache = {}; } catch(e) {}
     try { if (typeof _lastVid !== 'undefined') _lastVid = ''; } catch(e) {}
 
-    console.log('✅ AUTO EMPIRE Patches applied — UI ready');
+    // ── PATCH 5: Theme Button sicherstellen ──
+    ensureThemeButton();
+
+    console.log('✅ AUTO EMPIRE Patches v2 — UI + Theme ready');
   }
 
-  // Patches erst nach 100ms anwenden damit game.js vollständig initialisiert ist
+  // ── PATCH 5: Theme Toggle sicherstellen ──
+  function ensureThemeButton() {
+    var btn = document.getElementById('theme-toggle-btn');
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.id = 'theme-toggle-btn';
+      btn.onclick = function() { if(typeof toggleTheme==='function') toggleTheme(); };
+      document.body.appendChild(btn);
+    }
+    // Sync button label mit aktuellem Theme
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    btn.innerHTML = cur === 'dark' ? '☀️ Light' : '🌙 Dark';
+  }
+
+  // Patches nach 100ms anwenden
   setTimeout(initializeUI, 100);
 
+  // Theme-Button nach jedem renderAll sicherstellen
+  var _origRA = window.renderAll;
+  if (typeof _origRA === 'function') {
+    window.renderAll = function() {
+      _origRA.apply(this, arguments);
+      setTimeout(ensureThemeButton, 50);
+    };
+  }
+
 })();
-      

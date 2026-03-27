@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
@@ -17,6 +17,9 @@
 </div>
 <div id="matrix-container"></div>
 
+<!-- THEME TOGGLE -->
+<button id="theme-toggle-btn" onclick="toggleTheme()" title="Theme wechseln">☀️ Light</button>
+
 <!-- COMPANY SELECTION SCREEN -->
 <div id="company-select">
   <div class="cs-bg"></div>
@@ -29,6 +32,9 @@
   <div class="cs-selected-info" id="cs-selected-info"></div>
   <div class="cs-start" id="cs-start" onclick="startWithCompany()">▶ SPIEL STARTEN</div>
 </div>
+
+<!-- DESKTOP OUTER WRAPPER -->
+<div id="desktop-bg"></div>
 
 <div id="app">
 <div class="hdr">
@@ -55,46 +61,58 @@
 <div id="content">
 <div class="view on" id="v-dash">
   <div id="ev-alerts"></div>
-  <div class="g2" style="margin-bottom:8px;">
+  <div class="g2 g4-desk" style="margin-bottom:8px;">
     <div class="kpi"><div class="kv" style="color:var(--gn)" id="d-rev">€0</div><div class="kl">Umsatz/Tag</div></div>
     <div class="kpi"><div class="kv" style="color:var(--cy)" id="d-prod">0</div><div class="kl">Produziert</div></div>
     <div class="kpi"><div class="kv" style="color:var(--go)" id="d-mod">0</div><div class="kl">Modelle</div></div>
     <div class="kpi"><div class="kv" style="color:var(--pu)" id="d-tl">1</div><div class="kl">Tech Lvl</div></div>
   </div>
-  <!-- BOTTLENECK / OPPORTUNITY PANEL -->
-  <div class="card" style="margin-bottom:8px;padding:10px 11px;">
-    <div class="panel-toggle open" onclick="togglePanel('bn-body','bn-toggle')">
-      <span style="font-size:11px;font-weight:700;color:var(--cy);letter-spacing:1px;text-transform:uppercase;">⚡ Engpässe &amp; Chancen</span>
-      <span class="pt-arrow" id="bn-toggle">▼</span>
+  <div class="desk-split">
+    <div class="desk-col">
+      <!-- BOTTLENECK / OPPORTUNITY PANEL -->
+      <div class="card" style="margin-bottom:8px;padding:10px 11px;">
+        <div class="panel-toggle open" onclick="togglePanel('bn-body','bn-toggle')">
+          <span style="font-size:11px;font-weight:700;color:var(--cy);letter-spacing:1px;text-transform:uppercase;">⚡ Engpässe &amp; Chancen</span>
+          <span class="pt-arrow" id="bn-toggle">▼</span>
+        </div>
+        <div id="bn-body" style="margin-top:8px;">
+          <div id="bn-list"><div style="font-size:11px;color:var(--dm);padding:6px 0;">Analyse läuft...</div></div>
+        </div>
+      </div>
+      <div class="sh">🧭 WAS JETZT TUN?</div>
+      <div id="guide-panel"></div>
     </div>
-    <div id="bn-body" style="margin-top:8px;">
-      <div id="bn-list"><div style="font-size:11px;color:var(--dm);padding:6px 0;">Analyse läuft...</div></div>
+    <div class="desk-col">
+      <!-- PRODUCTION HEALTH OVERVIEW -->
+      <div class="card" style="margin-bottom:8px;padding:10px 11px;">
+        <div class="panel-toggle open" onclick="togglePanel('ph-body','ph-toggle')">
+          <span style="font-size:11px;font-weight:700;color:var(--cy);letter-spacing:1px;text-transform:uppercase;">🏥 Produktionsgesundheit</span>
+          <span class="pt-arrow" id="ph-toggle">▼</span>
+        </div>
+        <div id="ph-body" style="margin-top:8px;">
+          <div id="ph-list"></div>
+        </div>
+      </div>
+      <div class="sh">🚗 FAHRZEUG-ÜBERSICHT</div>
+      <div id="veh-insights"></div>
     </div>
   </div>
-  <!-- PRODUCTION HEALTH OVERVIEW -->
-  <div class="card" style="margin-bottom:8px;padding:10px 11px;">
-    <div class="panel-toggle open" onclick="togglePanel('ph-body','ph-toggle')">
-      <span style="font-size:11px;font-weight:700;color:var(--cy);letter-spacing:1px;text-transform:uppercase;">🏥 Produktionsgesundheit</span>
-      <span class="pt-arrow" id="ph-toggle">▼</span>
-    </div>
-    <div id="ph-body" style="margin-top:8px;">
-      <div id="ph-list"></div>
-    </div>
-  </div>
-  <div class="sh">🧭 WAS JETZT TUN?</div>
-  <div id="guide-panel"></div>
-  <div class="sh">🚗 FAHRZEUG-ÜBERSICHT</div>
-  <div id="veh-insights"></div>
   <div class="sh">PRODUKTIONSLINIEN</div>
-  <div id="dash-lines"></div>
-  <div class="sh">KI AKTIVITÄT</div>
-  <div id="ai-log" style="max-height:100px;overflow-y:auto;font-size:11px;"></div>
-  <div class="sh">EREIGNISSE</div>
-  <div id="ev-feed"></div>
+  <div id="dash-lines" class="grid-2col"></div>
+  <div class="desk-split">
+    <div class="desk-col">
+      <div class="sh">KI AKTIVITÄT</div>
+      <div id="ai-log" style="max-height:120px;overflow-y:auto;font-size:11px;"></div>
+    </div>
+    <div class="desk-col">
+      <div class="sh">EREIGNISSE</div>
+      <div id="ev-feed"></div>
+    </div>
+  </div>
 </div>
-<div class="view" id="v-kompo"><div id="comp-cats" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;"></div><div id="comp-list"></div></div>
-<div class="view" id="v-fahr"><div id="veh-list"></div></div>
-<div class="view" id="v-prod"><div id="prod-lines"></div></div>
+<div class="view" id="v-kompo"><div id="comp-cats" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;"></div><div id="comp-list" class="grid-2col"></div></div>
+<div class="view" id="v-fahr"><div id="veh-list" class="grid-3col"></div></div>
+<div class="view" id="v-prod"><div id="prod-lines" class="grid-2col"></div></div>
 <div class="view" id="v-forsch">
   <div class="card" style="margin-bottom:9px;">
     <div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-weight:700;">F&amp;E Budget</span><span style="color:var(--cy);font-weight:700;" id="rd-pct">10%</span></div>
@@ -102,91 +120,144 @@
   </div>
   <div id="rd-area"></div>
 </div>
-<div class="view" id="v-markt"><div class="sh">MARKTANTEILE</div><div id="mkt-bars"></div><div class="sh">PREISKAMPF</div><div id="pw-panel"></div><div class="sh">KONKURRENTEN</div><div id="comp-cards"></div></div>
+<div class="view" id="v-markt">
+  <div class="desk-split">
+    <div class="desk-col">
+      <div class="sh">MARKTANTEILE</div><div id="mkt-bars"></div>
+      <div class="sh">PREISKAMPF</div><div id="pw-panel"></div>
+    </div>
+    <div class="desk-col">
+      <div class="sh">KONKURRENTEN</div><div id="comp-cards" class="grid-2col"></div>
+    </div>
+  </div>
+</div>
 <div class="view" id="v-region"><div id="region-list"></div></div>
 <div class="view" id="v-rohstoff"><div id="rohstoff-list"></div><div class="sh">LIEFERVERTRÄGE</div><div id="supplier-list"></div></div>
 <div class="view" id="v-personal">
-  <div class="g2" style="margin-bottom:8px;">
+  <div class="g2 g4-desk" style="margin-bottom:8px;">
     <div class="kpi"><div class="kv" style="color:var(--cy)" id="p-total">200</div><div class="kl">Mitarbeiter</div></div>
     <div class="kpi"><div class="kv" id="p-happy">75%</div><div class="kl">Zufriedenheit</div></div>
   </div>
-  <div class="sh">CEO</div><div id="ceo-panel"></div>
-  <div class="sh">HR AKTIONEN</div><div id="hr-panel"></div>
+  <div class="desk-split">
+    <div class="desk-col"><div class="sh">CEO</div><div id="ceo-panel"></div></div>
+    <div class="desk-col"><div class="sh">HR AKTIONEN</div><div id="hr-panel"></div></div>
+  </div>
 </div>
 <div class="view" id="v-boerse">
-  <div class="card" style="margin-bottom:9px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
-      <div><div style="font-size:20px;font-weight:700;" id="stk-big">€100</div><div id="stk-chg" style="font-size:11px;color:var(--gn);">+0%</div></div>
-      <div style="text-align:right;"><div style="font-size:10px;color:var(--dm)">Deine Aktien</div><div style="font-size:15px;font-weight:700;color:var(--go);" id="stk-owned">0</div></div>
+  <div class="desk-split">
+    <div class="desk-col">
+      <div class="card" style="margin-bottom:9px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
+          <div><div style="font-size:20px;font-weight:700;" id="stk-big">€100</div><div id="stk-chg" style="font-size:11px;color:var(--gn);">+0%</div></div>
+          <div style="text-align:right;"><div style="font-size:10px;color:var(--dm)">Deine Aktien</div><div style="font-size:15px;font-weight:700;color:var(--go);" id="stk-owned">0</div></div>
+        </div>
+        <div class="schart" id="stk-chart"></div>
+      </div>
+      <div class="g2" style="margin-bottom:7px;">
+        <button class="btn can" onclick="buyStk(10)">📈 10 kaufen</button>
+        <button class="btn rd-b" onclick="sellStk(10)">📉 10 verkaufen</button>
+      </div>
+      <div class="g2" style="margin-bottom:7px;">
+        <button class="btn cy-b" onclick="buyStk(100)">📈 100 kaufen</button>
+        <button class="btn rd-b" onclick="sellStk(100)">📉 100 verkaufen</button>
+      </div>
     </div>
-    <div class="schart" id="stk-chart"></div>
+    <div class="desk-col">
+      <div class="sh">DIVIDENDEN</div><div id="div-panel"></div>
+      <div class="sh">FUSIONEN</div><div id="merger-panel"></div>
+    </div>
   </div>
-  <div class="g2" style="margin-bottom:7px;">
-    <button class="btn can" onclick="buyStk(10)">📈 10 kaufen</button>
-    <button class="btn rd-b" onclick="sellStk(10)">📉 10 verkaufen</button>
-  </div>
-  <div class="g2" style="margin-bottom:7px;">
-    <button class="btn cy-b" onclick="buyStk(100)">📈 100 kaufen</button>
-    <button class="btn rd-b" onclick="sellStk(100)">📉 100 verkaufen</button>
-  </div>
-  <div class="sh">DIVIDENDEN</div><div id="div-panel"></div>
-  <div class="sh">FUSIONEN</div><div id="merger-panel"></div>
 </div>
 <div class="view" id="v-bank">
   <div class="card" style="margin-bottom:9px;"><div style="display:flex;justify-content:space-between;"><span style="font-weight:700;">Kreditwürdigkeit</span><span id="credit-r" style="color:var(--gn);font-weight:700;">AAA</span></div><div class="pw"><div class="pb gr" style="width:80%"></div></div></div>
-  <div class="sh">KREDIT AUFNEHMEN</div><div id="loan-opts"></div>
-  <div class="sh">AKTIVE KREDITE</div><div id="active-loans"></div>
-  <div class="sh">STEUERN</div><div id="tax-panel"></div>
+  <div class="desk-split">
+    <div class="desk-col"><div class="sh">KREDIT AUFNEHMEN</div><div id="loan-opts"></div></div>
+    <div class="desk-col">
+      <div class="sh">AKTIVE KREDITE</div><div id="active-loans"></div>
+      <div class="sh">STEUERN</div><div id="tax-panel"></div>
+    </div>
+  </div>
 </div>
 <div class="view" id="v-politik">
   <div class="g2" style="margin-bottom:8px;">
     <div class="kpi"><div class="kv" style="color:var(--pu)" id="pol-lp">0</div><div class="kl">Lobby-Punkte</div></div>
     <div class="kpi"><div class="kv" id="pol-co2">100</div><div class="kl">CO2-Index</div></div>
   </div>
-  <div class="sh">CO2 &amp; ESG</div><div id="co2-panel"></div>
-  <div class="sh">LOBBYING</div><div id="lobby-list"></div>
+  <div class="desk-split">
+    <div class="desk-col"><div class="sh">CO2 &amp; ESG</div><div id="co2-panel"></div></div>
+    <div class="desk-col"><div class="sh">LOBBYING</div><div id="lobby-list"></div></div>
+  </div>
 </div>
 <div class="view" id="v-racing"><div id="racing-status"></div><div class="sh">RENNKALENDER</div><div id="race-cal"></div></div>
 <div class="view" id="v-spionage">
   <div class="card" style="margin-bottom:9px;"><div style="display:flex;justify-content:space-between;"><span style="font-weight:700;">Spionagepunkte</span><span style="color:var(--pu);font-weight:700;" id="spy-pts">0 SP</span></div></div>
-  <div class="sh">MISSIONEN</div><div id="spy-list"></div>
-  <div class="sh">SICHERHEIT</div><div id="sec-panel"></div>
+  <div class="desk-split">
+    <div class="desk-col"><div class="sh">MISSIONEN</div><div id="spy-list"></div></div>
+    <div class="desk-col"><div class="sh">SICHERHEIT</div><div id="sec-panel"></div></div>
+  </div>
 </div>
-<div class="view" id="v-patente"><div class="sh">MEINE PATENTE</div><div id="my-patents"></div><div class="sh">KLAGEN</div><div id="patent-suits"></div></div>
+<div class="view" id="v-patente">
+  <div class="desk-split">
+    <div class="desk-col"><div class="sh">MEINE PATENTE</div><div id="my-patents"></div></div>
+    <div class="desk-col"><div class="sh">KLAGEN</div><div id="patent-suits"></div></div>
+  </div>
+</div>
 <div class="view" id="v-showrooms">
   <div class="card" style="margin-bottom:9px;"><div style="display:flex;justify-content:space-between;"><span style="font-weight:700;">Showrooms gesamt</span><span style="color:var(--cy);font-weight:700;" id="sr-total">0</span></div><div style="font-size:10px;color:var(--dm);margin-top:3px;">+2% Verkauf pro Showroom</div></div>
-  <div id="sr-list"></div><div class="sh">BAUEN</div><div id="sr-build"></div>
+  <div class="desk-split">
+    <div class="desk-col"><div id="sr-list"></div></div>
+    <div class="desk-col"><div class="sh">BAUEN</div><div id="sr-build" class="grid-2col"></div></div>
+  </div>
 </div>
-<div class="view" id="v-werb"><div id="ad-list"></div></div>
-<div class="view" id="v-auto"><div id="auto-list"></div></div>
-<div class="view" id="v-werke"><div class="sh">EIGENE WERKE</div><div id="own-fac"></div><div class="sh">NEUES WERK</div><div id="buy-fac"></div></div>
-<div class="view" id="v-tuning"><div id="tuning-unlock"></div><div id="tuning-list"></div></div>
-<div class="view" id="v-konzept"><div id="konzept-list"></div></div>
+<div class="view" id="v-werb"><div id="ad-list" class="grid-2col"></div></div>
+<div class="view" id="v-auto"><div id="auto-list" class="grid-2col"></div></div>
+<div class="view" id="v-werke">
+  <div class="desk-split">
+    <div class="desk-col"><div class="sh">EIGENE WERKE</div><div id="own-fac" class="grid-2col"></div></div>
+    <div class="desk-col"><div class="sh">NEUES WERK</div><div id="buy-fac" class="grid-2col"></div></div>
+  </div>
+</div>
+<div class="view" id="v-tuning"><div id="tuning-unlock"></div><div id="tuning-list" class="grid-2col"></div></div>
+<div class="view" id="v-konzept"><div id="konzept-list" class="grid-3col"></div></div>
 <div class="view" id="v-roadmap">
   <div class="card" style="margin-bottom:9px;background:linear-gradient(135deg,#001a10,#000a20);">
     <div style="font-size:13px;font-weight:700;color:var(--gn);margin-bottom:4px;">⚡ Elektro-Roadmap 2025–2040</div>
     <div style="font-size:11px;color:var(--t2);">E-Flotte wächst → CO2 sinkt → Subventionen steigen</div>
   </div>
-  <div id="ev-roadmap"></div>
+  <div id="ev-roadmap" class="grid-2col"></div>
 </div>
 <div class="view" id="v-embargo">
   <div class="g2" style="margin-bottom:8px;">
     <div class="kpi"><div class="kv" style="color:var(--rd)" id="emb-cnt">0</div><div class="kl">Aktive Embargos</div></div>
     <div class="kpi"><div class="kv" style="color:var(--go)" id="emb-exp">0%</div><div class="kl">Risiko-Exposure</div></div>
   </div>
-  <div class="sh">AKTIVE EMBARGOS</div><div id="emb-list"></div>
-  <div class="sh">VERSICHERUNGEN</div><div id="ins-list"></div>
+  <div class="desk-split">
+    <div class="desk-col"><div class="sh">AKTIVE EMBARGOS</div><div id="emb-list"></div></div>
+    <div class="desk-col"><div class="sh">VERSICHERUNGEN</div><div id="ins-list"></div></div>
+  </div>
 </div>
-<div class="view" id="v-wetter"><div id="crisis-list"></div><div class="sh">VERSICHERUNGEN</div><div id="ins-list2"></div></div>
-<div class="view" id="v-kiangriff"><div class="sh">KI-ANGRIFFE</div><div id="ki-log"></div><div class="sh">ABWEHR</div><div id="ki-def"></div></div>
-<div class="view" id="v-saison"><div id="season-hdr"></div><div class="sh">SAISONALE NACHFRAGE</div><div id="season-list"></div></div>
+<div class="view" id="v-wetter">
+  <div class="desk-split">
+    <div class="desk-col"><div id="crisis-list"></div></div>
+    <div class="desk-col"><div class="sh">VERSICHERUNGEN</div><div id="ins-list2"></div></div>
+  </div>
+</div>
+<div class="view" id="v-kiangriff">
+  <div class="desk-split">
+    <div class="desk-col"><div class="sh">KI-ANGRIFFE</div><div id="ki-log"></div></div>
+    <div class="desk-col"><div class="sh">ABWEHR</div><div id="ki-def"></div></div>
+  </div>
+</div>
+<div class="view" id="v-saison"><div id="season-hdr"></div><div class="sh">SAISONALE NACHFRAGE</div><div id="season-list" class="grid-2col"></div></div>
 <div class="view" id="v-qualitaet">
   <div class="g2" style="margin-bottom:8px;">
     <div class="kpi"><div class="kv" id="q-stars">⭐⭐⭐</div><div class="kl">Kundenbewertung</div></div>
     <div class="kpi"><div class="kv" style="color:var(--cy)" id="q-cnt">0</div><div class="kl">Reviews</div></div>
   </div>
-  <div class="sh">QUALITÄTS-DNA</div><div id="q-dna"></div>
-  <div class="sh">KUNDENSTIMMEN</div><div id="q-reviews"></div>
+  <div class="desk-split">
+    <div class="desk-col"><div class="sh">QUALITÄTS-DNA</div><div id="q-dna"></div></div>
+    <div class="desk-col"><div class="sh">KUNDENSTIMMEN</div><div id="q-reviews"></div></div>
+  </div>
 </div>
 <div class="view" id="v-blackmarket">
   <div class="card" style="margin-bottom:9px;background:linear-gradient(135deg,#0a0010,#100005);">
@@ -194,16 +265,21 @@
     <div class="pw"><div class="pb pu" id="bm-risk-bar" style="width:0%"></div></div>
     <div style="font-size:10px;color:var(--dm);margin-top:3px;">Bei >70%: Razzia-Gefahr!</div>
   </div>
-  <div id="bm-list"></div>
+  <div id="bm-list" class="grid-2col"></div>
 </div>
-<div class="view" id="v-ingenieure"><div id="eng-list"></div><div class="sh">EINSTELLEN</div><div id="eng-hire"></div></div>
+<div class="view" id="v-ingenieure">
+  <div class="desk-split">
+    <div class="desk-col"><div id="eng-list"></div></div>
+    <div class="desk-col"><div class="sh">EINSTELLEN</div><div id="eng-hire"></div></div>
+  </div>
+</div>
 <div class="view" id="v-kampagne">
   <div class="card" style="margin-bottom:9px;background:linear-gradient(135deg,#001015,#050015);">
     <div style="font-size:13px;font-weight:700;color:var(--cy);margin-bottom:3px;">📖 Kampagnen-Modus</div>
     <div style="font-size:11px;color:var(--t2);">20 Missionen von Polo Neo bis Weltkonzern.</div>
   </div>
   <div id="mission-prog" style="margin-bottom:9px;"></div>
-  <div id="mission-list"></div>
+  <div id="mission-list" class="grid-2col"></div>
 </div>
 <div class="view" id="v-ranking">
   <div class="g2" style="margin-bottom:8px;">
@@ -214,17 +290,19 @@
 </div>
 <div class="view" id="v-weltkarte">
   <div id="wm-container"></div>
-  <div class="sh">KI-WERKE</div><div id="rival-facs"></div>
+  <div class="sh">KI-WERKE</div><div id="rival-facs" class="grid-2col"></div>
 </div>
 <div class="view" id="v-fin">
-  <div class="g2" style="margin-bottom:8px;">
+  <div class="g2 g4-desk" style="margin-bottom:8px;">
     <div class="kpi"><div class="kv" style="color:var(--gn)" id="f-rev">€0</div><div class="kl">Gesamtumsatz</div></div>
     <div class="kpi"><div class="kv" style="color:var(--rd)" id="f-cost">€0</div><div class="kl">Gesamtkosten</div></div>
     <div class="kpi"><div class="kv" style="color:var(--cy)" id="f-pft">€0</div><div class="kl">Gewinn</div></div>
     <div class="kpi"><div class="kv" style="color:var(--go)" id="f-val">€0</div><div class="kl">Firmenwert</div></div>
   </div>
-  <div class="sh">JAHRESBERICHT</div><div id="yr-report"></div>
-  <div class="sh">KENNZAHLEN</div><div id="fin-detail"></div>
+  <div class="desk-split">
+    <div class="desk-col"><div class="sh">JAHRESBERICHT</div><div id="yr-report"></div></div>
+    <div class="desk-col"><div class="sh">KENNZAHLEN</div><div id="fin-detail"></div></div>
+  </div>
 </div>
 <div class="view" id="v-speichern">
   <div class="save-bar">
@@ -245,124 +323,148 @@
 </div>
 <div class="view" id="v-news">
   <div class="gcard-cyan" style="margin-bottom:9px;"><b style="color:var(--cy)">📰 Wirtschafts-Newsfeed</b><div style="font-size:11px;color:var(--t2);margin-top:3px;">Aktuelle Marktberichte und Branchennews.</div></div>
-  <div id="news-feed"></div>
+  <div id="news-feed" class="grid-2col"></div>
 </div>
 <div class="view" id="v-aktien2">
   <div class="g2" style="margin-bottom:8px;">
     <div class="kpi"><div class="kv" style="color:var(--go)" id="pf-val">€0</div><div class="kl">Portfolio-Wert</div></div>
     <div class="kpi"><div class="kv" id="pf-roi">0%</div><div class="kl">ROI</div></div>
   </div>
-  <div class="sh">INVESTMENTS</div><div id="portfolio-list"></div>
-  <div class="sh">RIVAL AKTIEN KAUFEN</div><div id="rival-stocks"></div>
+  <div class="desk-split">
+    <div class="desk-col"><div class="sh">INVESTMENTS</div><div id="portfolio-list"></div></div>
+    <div class="desk-col"><div class="sh">RIVAL AKTIEN KAUFEN</div><div id="rival-stocks" class="grid-2col"></div></div>
+  </div>
 </div>
 <div class="view" id="v-ziele">
   <div class="gcard-pu" style="margin-bottom:9px;"><b style="color:var(--pu)">🎯 Tägliche &amp; Wöchentliche Challenges</b></div>
-  <div class="sh">AKTIVE CHALLENGES</div><div id="challenge-list"></div>
-  <div class="sh">PRESTIGE PUNKTE</div><div id="prestige-pts-panel"></div>
+  <div class="desk-split">
+    <div class="desk-col"><div class="sh">AKTIVE CHALLENGES</div><div id="challenge-list"></div></div>
+    <div class="desk-col"><div class="sh">PRESTIGE PUNKTE</div><div id="prestige-pts-panel"></div></div>
+  </div>
 </div>
 <div class="view" id="v-lieferant2">
   <div class="g2" style="margin-bottom:8px;">
     <div class="kpi"><div class="kv" style="color:var(--cy)" id="pt-cnt">0</div><div class="kl">Aktive Partner</div></div>
     <div class="kpi"><div class="kv" style="color:var(--gn)" id="pt-save">€0</div><div class="kl">Einsparungen/Tag</div></div>
   </div>
-  <div id="partner-list"></div>
+  <div id="partner-list" class="grid-2col"></div>
 </div>
 <div class="view" id="v-forschlab">
   <div class="gcard-pu" style="margin-bottom:9px;"><b style="color:var(--pu)">🧪 Forschungs-Labor</b></div>
-  <div class="sh">LAB KAPAZITÄT</div><div id="lab-capacity"></div>
-  <div class="sh">TECH TREE</div><div id="tech-tree"></div>
+  <div class="desk-split">
+    <div class="desk-col"><div class="sh">LAB KAPAZITÄT</div><div id="lab-capacity"></div></div>
+    <div class="desk-col"><div class="sh">TECH TREE</div><div id="tech-tree"></div></div>
+  </div>
 </div>
 <div class="view" id="v-fahrzeugmarkt">
   <div class="sh">FAHRZEUGPREISE ANPASSEN</div>
   <div class="gcard-cyan" style="margin-bottom:9px;"><div style="font-size:11px;color:var(--t2);">Passe Verkaufspreise manuell an.</div></div>
-  <div id="price-adjustment"></div>
+  <div id="price-adjustment" class="grid-2col"></div>
 </div>
 <div class="view" id="v-mitbewerber2">
   <div class="g2" style="margin-bottom:8px;">
     <div class="kpi"><div class="kv" style="color:var(--rd)" id="riv-threat">0</div><div class="kl">Bedrohungslevel</div></div>
     <div class="kpi"><div class="kv" style="color:var(--cy)" id="riv-actions">0</div><div class="kl">KI-Aktionen</div></div>
   </div>
-  <div class="sh">RIVALITÄTS-ANALYSE</div><div id="rivalry-analysis"></div>
-  <div class="sh">GEZIELTE AKTIONEN</div><div id="rival-actions-list"></div>
+  <div class="desk-split">
+    <div class="desk-col"><div class="sh">RIVALITÄTS-ANALYSE</div><div id="rivalry-analysis"></div></div>
+    <div class="desk-col"><div class="sh">GEZIELTE AKTIONEN</div><div id="rival-actions-list"></div></div>
+  </div>
 </div>
 <div class="view" id="v-wirtschaft">
   <div class="holo" style="border-radius:12px;padding:13px;margin-bottom:9px;">
     <div style="font-size:13px;font-weight:700;color:var(--cy);margin-bottom:4px;">💰 Makro-Wirtschaft</div>
   </div>
-  <div class="g2" style="margin-bottom:8px;">
+  <div class="g2 g4-desk" style="margin-bottom:8px;">
     <div class="kpi"><div class="kv" id="eco-gdp" style="color:var(--gn)">+2.4%</div><div class="kl">BIP Wachstum</div></div>
     <div class="kpi"><div class="kv" id="eco-rate" style="color:var(--go)">3.5%</div><div class="kl">Leitzins</div></div>
     <div class="kpi"><div class="kv" id="eco-inf" style="color:var(--rd)">2.1%</div><div class="kl">Inflation</div></div>
     <div class="kpi"><div class="kv" id="eco-unemp" style="color:var(--cy)">5.2%</div><div class="kl">Arbeitslosigkeit</div></div>
   </div>
-  <div id="eco-effects"></div>
-  <div class="sh">AKTIONEN</div>
-  <div id="eco-cycle"></div>
+  <div class="desk-split">
+    <div class="desk-col"><div id="eco-effects"></div></div>
+    <div class="desk-col"><div class="sh">AKTIONEN</div><div id="eco-cycle"></div></div>
+  </div>
 </div>
 <div class="view" id="v-ankuendigungen">
   <div class="holo" style="border-radius:12px;padding:13px;margin-bottom:9px;">
     <div style="font-size:13px;font-weight:700;color:var(--go);margin-bottom:4px;">📢 Produkt-Ankündigungen</div>
   </div>
-  <div id="announce-active"></div>
-  <div class="sh">FAHRZEUG ANKÜNDIGEN</div>
-  <div id="announce-list"></div>
+  <div class="desk-split">
+    <div class="desk-col"><div id="announce-active"></div></div>
+    <div class="desk-col"><div class="sh">FAHRZEUG ANKÜNDIGEN</div><div id="announce-list"></div></div>
+  </div>
 </div>
 <div class="view" id="v-fusion2">
   <div class="g2" style="margin-bottom:8px;">
     <div class="kpi"><div class="kv" style="color:var(--pu)" id="ma-deals">0</div><div class="kl">Deals abgeschlossen</div></div>
     <div class="kpi"><div class="kv" style="color:var(--cy)" id="ma-val">€0</div><div class="kl">Portfoliowert M&amp;A</div></div>
   </div>
-  <div class="sh">ÜBERNAHME-OPTIONEN</div>
-  <div id="acquisition-list"></div>
-  <div class="sh">JOINT VENTURES</div>
-  <div id="jv-list"></div>
+  <div class="desk-split">
+    <div class="desk-col"><div class="sh">ÜBERNAHME-OPTIONEN</div><div id="acquisition-list"></div></div>
+    <div class="desk-col"><div class="sh">JOINT VENTURES</div><div id="jv-list"></div></div>
+  </div>
 </div>
 <div class="view" id="v-lieferkette">
   <div class="g2" style="margin-bottom:8px;">
     <div class="kpi"><div class="kv" id="sc-health" style="color:var(--gn)">100%</div><div class="kl">SC-Gesundheit</div></div>
     <div class="kpi"><div class="kv" id="sc-risk" style="color:var(--go)">0%</div><div class="kl">Risiko-Level</div></div>
   </div>
-  <div class="sh">LIEFERKETTEN-STATUS</div><div id="sc-status"></div>
-  <div class="sh">OPTIMIEREN</div><div id="sc-actions"></div>
+  <div class="desk-split">
+    <div class="desk-col"><div class="sh">LIEFERKETTEN-STATUS</div><div id="sc-status"></div></div>
+    <div class="desk-col"><div class="sh">OPTIMIEREN</div><div id="sc-actions"></div></div>
+  </div>
 </div>
 <div class="view" id="v-nachhaltigkeit">
   <div class="g2" style="margin-bottom:8px;">
     <div class="kpi"><div class="kv" id="esg-total" style="color:var(--gn)">50</div><div class="kl">ESG Score</div></div>
     <div class="kpi"><div class="kv" id="esg-rank">B</div><div class="kl">ESG Rating</div></div>
   </div>
-  <div class="sh">ESG BREAKDOWN</div><div id="esg-breakdown"></div>
-  <div class="sh">AKTIONEN</div><div id="esg-actions"></div>
-  <div id="co2-detail"></div>
+  <div class="desk-split">
+    <div class="desk-col"><div class="sh">ESG BREAKDOWN</div><div id="esg-breakdown"></div></div>
+    <div class="desk-col"><div class="sh">AKTIONEN</div><div id="esg-actions" class="grid-2col"></div><div id="co2-detail"></div></div>
+  </div>
 </div>
 <div class="view" id="v-absatz">
-  <div class="sh">ABSATZ PRO FAHRZEUG</div><div id="absatz-table"></div>
-  <div class="sh">REGIONALE VERTEILUNG</div><div id="absatz-regions"></div>
-  <div class="sh">PROGNOSE</div><div id="absatz-forecast"></div>
+  <div class="desk-split">
+    <div class="desk-col"><div class="sh">ABSATZ PRO FAHRZEUG</div><div id="absatz-table"></div></div>
+    <div class="desk-col">
+      <div class="sh">REGIONALE VERTEILUNG</div><div id="absatz-regions"></div>
+      <div class="sh">PROGNOSE</div><div id="absatz-forecast"></div>
+    </div>
+  </div>
 </div>
 <div class="view" id="v-weltmarkt">
-  <div class="g2" style="margin-bottom:8px;">
+  <div class="g2 g4-desk" style="margin-bottom:8px;">
     <div class="kpi"><div class="kv" id="wm-demand" style="color:var(--cy)">100%</div><div class="kl">Globale Nachfrage</div></div>
     <div class="kpi"><div class="kv" id="wm-oil" style="color:var(--go)">$85</div><div class="kl">Ölpreis/Barrel</div></div>
     <div class="kpi"><div class="kv" id="wm-usd" style="color:var(--gn)">1.08</div><div class="kl">EUR/USD</div></div>
     <div class="kpi"><div class="kv" id="wm-steel" style="color:var(--rd)">$680</div><div class="kl">Stahl $/Tonne</div></div>
   </div>
-  <div class="sh">WELTMARKT EREIGNISSE</div>
-  <div id="wm-events"></div>
-  <div class="sh">GLOBALE TRENDS</div>
-  <div id="wm-trends"></div>
-  <div class="sh">LÄNDER-WIRTSCHAFT</div>
-  <div id="wm-countries"></div>
+  <div class="desk-split">
+    <div class="desk-col"><div class="sh">WELTMARKT EREIGNISSE</div><div id="wm-events"></div></div>
+    <div class="desk-col">
+      <div class="sh">GLOBALE TRENDS</div><div id="wm-trends"></div>
+      <div class="sh">LÄNDER-WIRTSCHAFT</div><div id="wm-countries"></div>
+    </div>
+  </div>
 </div>
 <div class="view" id="v-story">
   <div class="holo" style="border-radius:12px;padding:14px;margin-bottom:10px;">
     <div style="font-size:14px;font-weight:800;color:var(--cy);margin-bottom:4px;">📚 Die Geschichte deines Konzerns</div>
     <div style="font-size:11px;color:var(--t2);">40 Meilenstein-Missionen mit Lore-Texten.</div>
   </div>
-  <div id="story-header"></div>
-  <div class="sh">AKTIVE STORY-MISSION</div>
-  <div id="story-active"></div>
-  <div class="sh">ALLE KAPITEL</div>
-  <div id="story-chapters"></div>
+  <div class="desk-split">
+    <div class="desk-col">
+      <div id="story-header"></div>
+      <div class="sh">AKTIVE STORY-MISSION</div>
+      <div id="story-active"></div>
+    </div>
+    <div class="desk-col">
+      <div class="sh">ALLE KAPITEL</div>
+      <div id="story-chapters"></div>
+    </div>
+  </div>
 </div>
 <div style="height:120px;flex-shrink:0;" aria-hidden="true"></div>
 </div><!-- end content -->
@@ -371,5 +473,22 @@
 <div id="notifs"></div>
 
 <script src="game.js"></script>
+<script src="game_patch.js"></script>
+<script>
+// ── THEME SYSTEM ──────────────────────────────────────────────
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme', t);
+  var btn = document.getElementById('theme-toggle-btn');
+  if(btn) btn.innerHTML = t==='dark' ? '☀️ Light' : '🌙 Dark';
+  try{ localStorage.setItem('ae_theme', t); }catch(e){}
+}
+function toggleTheme(){
+  var cur = document.documentElement.getAttribute('data-theme')||'dark';
+  applyTheme(cur==='dark'?'light':'dark');
+  if(typeof notify==='function') notify(cur==='dark'?'☀️ Light Theme aktiviert':'🌙 Dark Theme aktiviert','ok');
+}
+// Load saved theme
+(function(){ try{ var t=localStorage.getItem('ae_theme'); if(t) applyTheme(t); }catch(e){} })();
+</script>
 </body>
 </html>
