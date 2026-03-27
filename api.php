@@ -8,87 +8,105 @@ if (!file_exists('config.php') || !isset($_SESSION['user_id'])) {
 }
 require_once 'config.php';
 $pdo = getPDO();
-$uid    = $_SESSION['user_id'];
+$uid    = (int)$_SESSION['user_id'];
 $action = $_GET['action'] ?? '';
 
 // ── INIT ─────────────────────────────────────────────────────────────────────
 if ($action === 'init') {
-    // User state
-    $stmt = $pdo->prepare("SELECT json_state, company_id, company_name, company_color, money, esg_score, stock_price, market_share FROM ae_users WHERE id=?");
-    $stmt->execute([$uid]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Always decode saved state if present
+    // Try to fetch user row — graceful fallback if new columns don't exist yet
+    $user = null;
+    try {
+        $stmt = $pdo->prepare("SELECT json_state, company_id, company_name, company_color, money FROM ae_users WHERE id=?");
+        $stmt->execute([$uid]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        // New columns (company_id etc) missing — run update.php! Fallback:
+        try {
+            $stmt = $pdo->prepare("SELECT json_state FROM ae_users WHERE id=?");
+            $stmt->execute([$uid]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e2) {
+            $user = null;
+        }
+    }
+
+    // Decode saved game state
     $user_state = null;
-    if ($user['json_state']) {
+    if ($user && !empty($user['json_state'])) {
         $user_state = json_decode($user['json_state'], true);
     }
-    // CRITICAL: inject company_id into state if missing (e.g. first save not yet written)
+
+    // KEY: inject company_id from DB column → persists even before first auto-save!
     $company_id = $user['company_id'] ?? null;
     if ($company_id) {
         if ($user_state === null) {
-            // Company was selected but state not yet saved — create minimal state
             $user_state = ['companyId' => $company_id];
         } elseif (empty($user_state['companyId'])) {
             $user_state['companyId'] = $company_id;
         }
     }
 
-    // Real multiplayer rivals (real players + AI bots)
-    $stmt2 = $pdo->query("SELECT id, username, company_name as n, company_color as cl, money as ca, market_share as sh, is_ai FROM ae_users WHERE id != $uid ORDER BY money DESC LIMIT 12");
+    // Multiplayer rivals
     $rivals = [];
-    foreach ($stmt2->fetchAll(PDO::FETCH_ASSOC) as $r) {
-        $rivals[] = [
-            'id'    => 'user_' . $r['id'],
-            'n'     => $r['n'] ?: $r['username'],
-            'cl'    => $r['cl'] ?: '#888888',
-            'ca'    => (int)$r['ca'],
-            'sh'    => (float)($r['sh'] ?: rand(1, 12)),
-            'ag'    => $r['is_ai'] ? 0.8 : 0.5,
-            'isAI'  => (bool)$r['is_ai'],
-            'ic'    => $r['is_ai'] ? '🤖' : '👤',
-        ];
-    }
+    try {
+        $stmt2 = $pdo->query("SELECT id, username, company_name as n, company_color as cl, money as ca, is_ai FROM ae_users WHERE id != $uid ORDER BY money DESC LIMIT 12");
+        foreach ($stmt2->fetchAll(PDO::FETCH_ASSOC) as $r) {
+            $rivals[] = [
+                'id'   => 'user_' . $r['id'],
+                'n'    => $r['n'] ?: $r['username'],
+                'cl'   => $r['cl'] ?: '#888888',
+                'ca'   => (int)$r['ca'],
+                'sh'   => round(rand(1, 12) + rand(0, 9) / 10, 1),
+                'ag'   => !empty($r['is_ai']) ? 0.8 : 0.5,
+                'isAI' => !empty($r['is_ai']),
+                'ic'   => !empty($r['is_ai']) ? 'KI' : 'P',
+            ];
+        }
+    } catch (PDOException $e) { /* rivals optional */ }
 
-    // Global leaderboard (top 20)
-    $stmt3 = $pdo->query("SELECT u.id, u.username, u.company_name, u.money, u.is_ai FROM ae_users u ORDER BY u.money DESC LIMIT 20");
+    // Leaderboard
     $leaderboard = [];
-    $pos = 1;
-    foreach ($stmt3->fetchAll(PDO::FETCH_ASSOC) as $row) {
-        $leaderboard[] = [
-            'name'    => $row['company_name'] ?: $row['username'],
-            'company' => $row['username'],
-            'score'   => (int)$row['money'],
-            'isMe'    => (int)$row['id'] === (int)$uid,
-            'isAI'    => (bool)$row['is_ai'],
-            'rank'    => $pos++,
-        ];
-    }
+    try {
+        $stmt3 = $pdo->query("SELECT id, username, company_name, money, is_ai FROM ae_users ORDER BY money DESC LIMIT 20");
+        $pos = 1;
+        foreach ($stmt3->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $leaderboard[] = [
+                'name'    => $row['company_name'] ?: $row['username'],
+                'company' => $row['username'],
+                'score'   => (int)$row['money'],
+                'isMe'    => (int)$row['id'] === $uid,
+                'isAI'    => !empty($row['is_ai']),
+                'rank'    => $pos++,
+            ];
+        }
+    } catch (PDOException $e) { /* leaderboard optional */ }
 
     echo json_encode([
-        'status'            => 'ok',
-        'user_state'        => $user_state,
-        'multiplayer_rivals'=> $rivals,
-        'leaderboard'       => $leaderboard,
+        'status'             => 'ok',
+        'user_state'         => $user_state,
+        'company_id'         => $company_id,   // also top-level for easy frontend check
+        'multiplayer_rivals' => $rivals,
+        'leaderboard'        => $leaderboard,
     ]);
     exit;
 }
 
-// ── SET COMPANY (persist company choice after selection) ──────────────────────
+// ── SET COMPANY ───────────────────────────────────────────────────────────────
 if ($action === 'set_company') {
-    $body = json_decode(file_get_contents('php://input'), true);
+    $body          = json_decode(file_get_contents('php://input'), true);
     $company_id    = $body['company_id']    ?? null;
     $company_name  = $body['company_name']  ?? null;
     $company_color = $body['company_color'] ?? '#00d4ff';
+    if (!$company_id) { echo json_encode(['error' => 'No company_id']); exit; }
 
-    if (!$company_id) {
-        echo json_encode(['error' => 'No company_id provided']);
-        exit;
-    }
+    // Ensure columns exist (graceful)
+    try { $pdo->exec("ALTER TABLE ae_users ADD COLUMN IF NOT EXISTS company_id VARCHAR(30) DEFAULT NULL"); } catch(Exception $e){}
+    try { $pdo->exec("ALTER TABLE ae_users ADD COLUMN IF NOT EXISTS company_color VARCHAR(7) DEFAULT '#00d4ff'"); } catch(Exception $e){}
 
     $stmt = $pdo->prepare("UPDATE ae_users SET company_id=?, company_name=?, company_color=? WHERE id=?");
     $stmt->execute([$company_id, $company_name, $company_color, $uid]);
-    echo json_encode(['status' => 'company_set']);
+    echo json_encode(['status' => 'company_set', 'company_id' => $company_id]);
     exit;
 }
 
@@ -96,34 +114,19 @@ if ($action === 'set_company') {
 if ($action === 'save') {
     $data    = file_get_contents('php://input');
     $decoded = json_decode($data, true);
+    $money   = isset($decoded['money'])      ? (int)$decoded['money']       : null;
+    $share   = isset($decoded['share'])      ? (float)$decoded['share']     : null;
+    $stock   = isset($decoded['stockPrice']) ? (float)$decoded['stockPrice']: null;
 
-    // Update money and market share in user row for leaderboard/rivals
-    $money  = isset($decoded['money'])  ? (int)$decoded['money']  : null;
-    $share  = isset($decoded['share'])  ? (float)$decoded['share'] : null;
-    $stock  = isset($decoded['stockPrice']) ? (float)$decoded['stockPrice'] : null;
-
-    $stmt = $pdo->prepare("UPDATE ae_users SET json_state=?, last_update=NOW(), money=COALESCE(?,money), market_share=COALESCE(?,market_share), stock_price=COALESCE(?,stock_price) WHERE id=?");
-    $stmt->execute([$data, $money, $share, $stock, $uid]);
-    echo json_encode(['status' => 'saved']);
-    exit;
-}
-
-// ── LEADERBOARD ───────────────────────────────────────────────────────────────
-if ($action === 'leaderboard') {
-    $stmt = $pdo->query("SELECT id, username, company_name, money, is_ai FROM ae_users ORDER BY money DESC LIMIT 50");
-    $rows = [];
-    $pos = 1;
-    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-        $rows[] = [
-            'rank'    => $pos++,
-            'name'    => $row['company_name'] ?: $row['username'],
-            'user'    => $row['username'],
-            'score'   => (int)$row['money'],
-            'isMe'    => (int)$row['id'] === (int)$uid,
-            'isAI'    => (bool)$row['is_ai'],
-        ];
+    try {
+        $stmt = $pdo->prepare("UPDATE ae_users SET json_state=?, last_update=NOW(), money=COALESCE(?,money), market_share=COALESCE(?,market_share), stock_price=COALESCE(?,stock_price) WHERE id=?");
+        $stmt->execute([$data, $money, $share, $stock, $uid]);
+    } catch (PDOException $e) {
+        // Fallback without optional columns
+        $stmt = $pdo->prepare("UPDATE ae_users SET json_state=?, last_update=NOW() WHERE id=?");
+        $stmt->execute([$data, $uid]);
     }
-    echo json_encode(['status' => 'ok', 'leaderboard' => $rows]);
+    echo json_encode(['status' => 'saved']);
     exit;
 }
 
