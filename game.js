@@ -2697,7 +2697,7 @@ const COMPANIES = [
   },
 ];
 
-let selectedCompany = null;
+alert('Multiplayer v3 lädt...');let selectedCompany = null;
 
 function buildCompanySelection() {
   const grid = document.getElementById('cs-grid');
