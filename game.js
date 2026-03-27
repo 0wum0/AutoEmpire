@@ -129,6 +129,18 @@ const G = {
 
 // ── DATA ──
 const COMPS=[
+
+  {id:'c_bat_quantum', n:'Quantum Batterie', cat:'bat', cost:15000, time:8000, q:0.3, ico:'🔋', reqPt:5000},
+  {id:'c_mot_hyper', n:'HyperDrive Motor', cat:'mot', cost:12000, time:6000, q:0.25, ico:'⚙️', reqPt:4000},
+  {id:'c_sens_quantum', n:'Quantum Sensoren', cat:'sens', cost:8000, time:4000, q:0.2, ico:'📡', reqPt:3500},
+  {id:'c_lux_holo', n:'Holo-Cockpit', cat:'lux', cost:5000, time:3000, q:0.15, ico:'🌌', reqPt:2000},
+  {id:'c_chassis_carbon', n:'Carbon Chassis', cat:'body', cost:6000, time:3500, q:0.12, ico:'🏎️', reqPt:1500},
+  {id:'c_chassis_titanium', n:'Titanium Frame', cat:'body', cost:10000, time:5000, q:0.2, ico:'🛡️', reqPt:3000},
+  {id:'c_aero_wings', n:'Aero-Flaps', cat:'body', cost:2500, time:1500, q:0.05, ico:'🪽', reqPt:1000},
+  {id:'c_lux_massage', n:'Massage-Sitze', cat:'lux', cost:3000, time:2000, q:0.1, ico:'💆', reqPt:1200},
+  {id:'c_bat_solar', n:'Solar-Dach Integration', cat:'bat', cost:7500, time:4500, q:0.15, ico:'☀️', reqPt:2500},
+  {id:'c_sens_lidar_v2', n:'LiDAR 360° Array', cat:'sens', cost:6500, time:3000, q:0.15, ico:'👁️', reqPt:2000},
+
   {id:'eng_base',cat:'Antrieb',   name:'4-Zyl. Benziner', icon:'🔧',cost:50000, inc:15000,max:10,req:{steel:50,aluminum:20}},
   {id:'eng_v6',  cat:'Antrieb',   name:'V6 3.0L',         icon:'🔥',cost:150000,inc:40000,max:8, req:{steel:80,aluminum:40}},
   {id:'eng_dsl', cat:'Antrieb',   name:'Diesel TDI',      icon:'⛽',cost:80000, inc:20000,max:8, req:{steel:60,aluminum:30}},
@@ -161,6 +173,18 @@ const COMPS=[
 ];
 
 const VEHS=[
+
+  {id:'v_mega_sedan', n:'Titan Limousine', cat:'lux', p:65000, cost:28000, time:14000, q:0.18, ico:'🕴️', req:['c_bat_solid', 'c_sens_ai', 'c_lux_seats']},
+  {id:'v_eco_city', n:'Metro Sprinter', cat:'eco', p:18000, cost:9000, time:3500, q:0.04, ico:'🚙', req:['c_bat_base', 'c_mot_base']},
+  {id:'v_hyper_truck', n:'Ares Cyber-Truck', cat:'suv', p:85000, cost:42000, time:18000, q:0.25, ico:'🚜', req:['c_bat_solid', 'c_mot_hp', 'c_sens_adv']},
+  {id:'v_sport_gt', n:'Vortex GT', cat:'sport', p:120000, cost:60000, time:22000, q:0.3, ico:'🏎️', req:['c_bat_solid', 'c_mot_hp', 'c_sens_ai']},
+  {id:'v_family_van', n:'Voyager Van', cat:'mid', p:35000, cost:18000, time:7000, q:0.08, ico:'🚐', req:['c_bat_adv', 'c_mot_base']},
+  {id:'v_retro_cabrio', n:'Neo-Retro Cabrio', cat:'sport', p:55000, cost:25000, time:9000, q:0.15, ico:'🚘', req:['c_bat_adv', 'c_mot_hp']},
+  {id:'v_safari_4x4', n:'Safari Offroader', cat:'suv', p:48000, cost:26000, time:11000, q:0.12, ico:'🏕️', req:['c_bat_adv', 'c_mot_adv', 'c_lux_seats']},
+  {id:'v_micro_pod', n:'Pod Commuter', cat:'eco', p:12000, cost:5000, time:2500, q:0.03, ico:'🛸', req:['c_bat_base', 'c_sens_adv']},
+  {id:'v_lunar_rover', n:'Lunar Concept', cat:'lux', p:150000, cost:80000, time:30000, q:0.4, ico:'🌕', req:['c_bat_solid', 'c_mot_hp', 'c_sens_ai']},
+  {id:'v_ delivery_box', n:'Cargo-Bot M1', cat:'mid', p:28000, cost:12000, time:5000, q:0.05, ico:'📦', req:['c_bat_adv', 'c_sens_ai']},
+
   {id:'polo',   name:'Polo Neo',   e:'🚙',seg:'Kleinstwagen',price:18900, pc:9000, t:120,cap:8,req:['eng_base','body_st','chassis']},
   {id:'golf',   name:'Golf X',     e:'🚗',seg:'Kompakt',     price:28500, pc:14000,t:150,cap:6,req:['eng_base','body_st','chassis','int_base']},
   {id:'passat', name:'Passat Evo', e:'🚕',seg:'Mittelklasse',price:38000, pc:19000,t:180,cap:4,req:['eng_v6','body_alu','chassis']},
@@ -189,6 +213,18 @@ const FACS=[
 ];
 
 const RD=[
+
+  {id:'rd_sales_ai', n:'Sales-KI Optimierung', cost:500000, pts:10000, ico:'🤖', type:'salesRate', val:0.15, d:'+15% Grundtempo im Verkauf.'},
+  {id:'rd_prod_ai', n:'Produktions-KI', cost:500000, pts:10000, ico:'🦾', type:'prodRate', val:0.15, d:'+15% schnellere Produktion.'},
+  {id:'rd_nano_paint', n:'Nano-Lackierung', cost:200000, pts:5000, ico:'🎨', type:'priceMax', val:0.05, d:'Kunden akzeptieren 5% höhere Preise.'},
+  {id:'rd_marketing_psych', n:'Kaufpsychologie', cost:300000, pts:6000, ico:'🧠', type:'salesRate', val:0.10, d:'+10% Verkauf durch bessere Werbung.'},
+  {id:'rd_logistics_drone', n:'Drohnen-Logistik', cost:400000, pts:8000, ico:'🚁', type:'prodCost', val:0.05, d:'-5% Produktionskosten.'},
+  {id:'rd_eco_battery_recycling', n:'Akku-Recycling', cost:350000, pts:7000, ico:'♻️', type:'esgBonus', val:15, d:'+15 ESG Punkte permanent.'},
+  {id:'rd_quantum_computing', n:'Quanten-F&E', cost:1000000, pts:20000, ico:'💻', type:'rdSpeed', val:0.2, d:'Generiert 20% mehr Forschungspunkte.'},
+  {id:'rd_brand_cult', n:'Kult-Markenstatus', cost:800000, pts:15000, ico:'🌟', type:'priceMax', val:0.1, d:'Erhöht max. Verkaufspreise um 10%.'},
+  {id:'rd_lobbying_expert', n:'Lobby-Einfluss', cost:600000, pts:12000, ico:'🏛️', type:'lobbyBonus', val:1, d:'Erhält doppelt so viele Lobby-Punkte.'},
+  {id:'rd_zero_waste', n:'Zero-Waste Produktion', cost:450000, pts:9000, ico:'🗑️', type:'esgBonus', val:20, d:'+20 ESG Punkte.'},
+
   {cat:'🔧 Antrieb',items:[{id:'turbo',name:'Turboaufladung',icon:'💨',cost:100000,desc:'+15%'},{id:'fsi',name:'Direkteinspritz.',icon:'⛽',cost:200000,desc:'-10% Verbr.'},{id:'startstop',name:'Start-Stop',icon:'🔄',cost:150000,desc:'Stadt -8%'},{id:'mild48',name:'48V Mildhybrid',icon:'🌿',cost:400000,desc:'CO2 -20%'},{id:'solid',name:'Feststoffakku',icon:'🔋',cost:1000000,desc:'Reichw. +50%'}]},
   {cat:'🛡️ Sicherheit',items:[{id:'abs',name:'ABS & ESP',icon:'🚦',cost:80000,desc:'+NCAP'},{id:'airbag',name:'Multi-Airbag',icon:'🛡️',cost:120000,desc:'8 Airbags'},{id:'lane',name:'Lane Assist',icon:'📏',cost:200000,desc:'+Rep'},{id:'l2',name:'Level 2 Auto.',icon:'🤖',cost:600000,desc:'Teilautonom'},{id:'l4',name:'Level 4 Auto.',icon:'🚗',cost:2000000,desc:'Hochautonom'}]},
   {cat:'🏭 Produktion',items:[{id:'lean',name:'Lean Production',icon:'⚡',cost:150000,desc:'Kosten -8%'},{id:'jit',name:'Just-in-Time',icon:'📦',cost:200000,desc:'Lager -30%'},{id:'aiq',name:'KI Qualität',icon:'🔬',cost:400000,desc:'Ausschuss /2'},{id:'cobot',name:'Koll. Roboter',icon:'🤖',cost:600000,desc:'+20% Out.'},{id:'giga',name:'Gigapress',icon:'🏗️',cost:3000000,desc:'CF Guss'}]},
@@ -199,6 +235,13 @@ const RD=[
 ];
 
 const ADS=[
+
+  {id:'ad_influencer', n:'Influencer Sponsoring', cost:50000, upk:500, dur:2400, l:'Social', boost:0.18},
+  {id:'ad_superbowl', n:'Superbowl Spot', cost:500000, upk:0, dur:600, l:'TV', boost:0.40},
+  {id:'ad_esports', n:'E-Sports Team Sponsor', cost:100000, upk:1000, dur:7200, l:'Web', boost:0.12},
+  {id:'ad_podcast', n:'Business Podcast', cost:25000, upk:250, dur:3600, l:'Radio', boost:0.08},
+  {id:'ad_hologram', n:'Sky-Hologramm Werbung', cost:250000, upk:2500, dur:1200, l:'Outdoor', boost:0.25},
+
   {id:'tv',  name:'TV Werbespots',   icon:'📺',cost:5000, eff:'+3% Nachfrage',ev:.03},
   {id:'soc', name:'Social Media',    icon:'📱',cost:3000, eff:'+5% Junge Käufer',ev:.05},
   {id:'f1',  name:'Motorsport',      icon:'🏎️',cost:25000,eff:'+8% Reputation',ev:.08},
@@ -235,6 +278,13 @@ const RIVALS=[
 ];
 
 const CEO_POOL=[
+
+  {id:'ceo_musk_parody', n:'Elon Tusk', bonus:'Marketing-Gott: Jede Werbung bringt +50% Wirkung, aber regelmäßige PR-Skandale.', cost:80000, ic:'🚀'},
+  {id:'ceo_supply_ninja', n:'Takeshi K.', bonus:'Lieferketten-Meister: Bauteile sind 15% billiger in der Produktion.', cost:55000, ic:'🥷'},
+  {id:'ceo_eco_warrior', n:'Greta T.', bonus:'Zero CO2: ESG-Score startet höher, staatliche Subventionen verdoppelt.', cost:60000, ic:'🌱'},
+  {id:'ceo_wallstreet', n:'Gordon G.', bonus:'Wolf of Börse: Aktienkauf ist 10% billiger, Übernahmen sind leichter.', cost:120000, ic:'💼'},
+  {id:'ceo_tech_genius', n:'Ada L.', bonus:'Tech-Pionier: +30% Grundgeschwindigkeit auf alle Forschungen.', cost:95000, ic:'🧠'},
+
   {name:'Dr. Eva Müller', emoji:'👩‍💼',spec:'Effizienz',  bonus:'Prod.kosten -10%',effect:'prodCost',val:.9},
   {name:'Hans Bergmann',  emoji:'👨‍💼',spec:'Expansion', bonus:'Werke -20% Kosten',effect:'facCost', val:.8},
   {name:'Yuki Tanaka',    emoji:'👩‍🔬',spec:'Technologie',bonus:'F&E +50% Speed',   effect:'rdSpeed', val:1.5},
@@ -287,6 +337,18 @@ const BM_ITEMS=[
 ];
 
 const EVENTS=[
+
+  {id:'ev_strike', n:'Gewerkschaft streikt!', t:'crisis', d:'Die Mitarbeiter fordern mehr Lohn. Die Produktion steht für kurze Zeit still.', ico:'🛑', action:()=>{ G.money-=50000; notify('Produktion gelähmt - €50.000 Verlust!','err'); }},
+  {id:'ev_gov_grant', n:'Staatliche Förderung', t:'good', d:'Die Regierung belohnt deine E-Auto-Strategie mit einem dicken Scheck.', ico:'🏛️', action:()=>{ G.money+=250000; notify('+€250.000 Förderung!','ok'); }},
+  {id:'ev_chip_shortage', n:'Globale Chip-Krise', t:'crisis', d:'Halbleiter sind knapp! Die Produktionskosten steigen!', ico:'💻', action:()=>{ G.money-=100000; notify('-€100.000 für alternative Chips!','err'); }},
+  {id:'ev_viral_video', n:'Virales Video', t:'good', d:'Ein TikTok-Video über dein Auto geht viral! Die Nachfrage explodiert.', ico:'📱', action:()=>{ G.share+=1; notify('+1% Marktanteil durch Hype!','ok'); }},
+  {id:'ev_recall', n:'Rückruf-Aktion', t:'crisis', d:'Ein Bremspedal klemmt bei einem Modell. Teure Rückrufaktion nötig.', ico:'🔧', action:()=>{ G.money-=200000; G.rep=Math.max(0,G.rep-5); notify('-€200.000 & Reputation sinkt','err'); }},
+  {id:'ev_tech_breakthrough', n:'Batterie-Durchbruch!', t:'good', d:'Das F&E-Team hat die Kapazität der Akkus maximiert!', ico:'🔋', action:()=>{ G.pts+=5000; notify('+5000 Forschungspunkte!','ok'); }},
+  {id:'ev_spy_caught', n:'Spion gefasst', t:'crisis', d:'Ein feindlicher Spion hat Konstruktionspläne kopiert.', ico:'🕵️', action:()=>{ G.pts-=2000; notify('Forschungsdaten gestohlen!','warn'); }},
+  {id:'ev_design_award', n:'Design Award 2026', t:'good', d:'Dein neues SUV-Modell gewinnt einen internationalen Designpreis.', ico:'🏆', action:()=>{ G.rep+=10; notify('+10 Reputation!','ok'); }},
+  {id:'ev_eco_protest', n:'Klima-Proteste', t:'crisis', d:'Aktivisten blockieren deine Fabriken wegen zu hohem CO2-Ausstoß.', ico:'🌍', action:()=>{ G.money-=75000; notify('Blockade kostet €75.000!','err'); }},
+  {id:'ev_billionaire_order', n:'Milliardärs-Flotte', t:'good', d:'Ein reicher Investor bestellt spontan 500 Luxus-Wagen!', ico:'💎', action:()=>{ G.money+=500000; notify('+€500.000 Großauftrag!','ok'); }},
+
   {name:'Ölpreisschock',     type:'crisis',emoji:'🛢️',desc:'Energiekosten +40%',    effect:'energy_cost', val:1.4,dur:120},
   {name:'E-Mobilitätsboom',  type:'good',  emoji:'⚡',desc:'E-Fahrzeuge +30% Nachfr.',effect:'ev_demand',  val:1.3,dur:120},
   {name:'Wirtschaftskrise',  type:'crisis',emoji:'📉',desc:'Preise -15%',            effect:'price_cut',   val:.85,dur:150},
