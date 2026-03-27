@@ -29,6 +29,27 @@
   --ticker-bg: linear-gradient(90deg,#020508,#030910,#020508);
 }
 
+/* ── COMPANY SELECT: always visible, never clipped ── */
+#company-select {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99998 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+#company-select .cs-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+  padding: 0 12px 12px !important;
+  max-width: 900px !important;
+  margin: 0 auto !important;
+  width: 100% !important;
+}
+/* theme toggle above company select */
+#theme-toggle-btn { z-index: 99999 !important; }
+
+
 /* ── LIGHT THEME ── */
 [data-theme="light"] {
   --bg:    #f2f6fb;
@@ -57,8 +78,8 @@
 /* ── BODY & APP DESKTOP LAYOUT ── */
 html, body {
   background: var(--body-outside) !important;
-  overflow: hidden;
 }
+
 
 body::before {
   content: '';
@@ -71,7 +92,8 @@ body::before {
     radial-gradient(ellipse at 80% 30%, rgba(187,85,255,.03) 0%, transparent 40%);
 }
 
-[data-theme="light"] body::before {
+[data-theme="light"] 
+body::before {
   background:
     radial-gradient(ellipse at 20% 50%, rgba(0,100,160,.05) 0%, transparent 50%),
     radial-gradient(ellipse at 80% 30%, rgba(100,0,160,.03) 0%, transparent 40%);
