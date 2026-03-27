@@ -1423,7 +1423,7 @@ function notify(msg,type){const a=document.getElementById('notifs');const d=docu
 function sv(id,btn){document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));const el=document.getElementById('v-'+id);if(el)el.classList.add('on');if(btn)btn.classList.add('on');document.getElementById('content').scrollTop=0;}
 function buildTicker(){const el=document.getElementById('tick-inner');if(!el)return;const ch=(G.stockHistory.length>1?(G.stockPrice/G.stockHistory[G.stockHistory.length-2]-1)*100:0);const items=[{t:'€'+fm(G.money),c:'p'},{t:'AKTIE €'+Math.round(G.stockPrice)+' ('+(ch>=0?'+':'')+ch.toFixed(1)+'%)',c:ch>=0?'p':'r'},{t:'MARKT '+G.share.toFixed(1)+'%',c:''},{t:'PROD '+fm(G.prod),c:'p'},...RIVALS.map(r=>({t:r.n.split(' ')[0]+' '+r.sh.toFixed(1)+'%',c:''})),{t:'SAISON: '+SEASON_CFG[G.season].name,c:'g'},{t:'AUTO EMPIRE v8',c:'g'}];el.innerHTML=items.map(i=>'<span class="ti '+i.c+'">◇ '+i.t+'</span>').join('');}
 
-init();
+// init() moved to async block below
 // ═══════════════════════════════════════════════════════
 //  AUTO EMPIRE v9  —  25 NEUE FEATURES + DESIGN FIXES
 // ═══════════════════════════════════════════════════════
@@ -4245,6 +4245,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             notify('Multiplayer Sync erfolgreich', 'ok');
         } else {
             if(typeof buildCompanySelection==='function') buildCompanySelection();
+            if(typeof init==='function') { try { init(); } catch(e) { console.warn('init skipped:',e); } }
         }
         
         // Auto Save Loop
