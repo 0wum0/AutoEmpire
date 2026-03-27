@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════
-//  AUTO EMPIRE — BOOTSTRAP PATCH (v3 — Race-Condition-Fix)
+//  AUTO EMPIRE — BOOTSTRAP PATCH (v4)
 //  Muss NACH game.js geladen werden.
 // ══════════════════════════════════════════════════════
 
@@ -13,23 +13,18 @@
     });
     var tgt = document.getElementById('v-' + viewId);
     if (tgt) tgt.classList.add('on');
-
-    document.querySelectorAll('.nsb').forEach(function(b) {
-      b.classList.remove('on');
-    });
+    document.querySelectorAll('.nsb').forEach(function(b) { b.classList.remove('on'); });
     if (btn) {
       btn.classList.add('on');
     } else {
       var sel = document.getElementById('nsb-' + viewId);
       if (sel) sel.classList.add('on');
     }
-
     try {
       if (typeof _barCache !== 'undefined') _barCache = {};
-      if (typeof _lastVid !== 'undefined') _lastVid = '';
+      if (typeof _lastVid  !== 'undefined') _lastVid  = '';
       if (typeof doTabRender === 'function') doTabRender(viewId);
     } catch(e) { console.warn('doTabRender error:', e); }
-
     var content = document.getElementById('content');
     if (content) content.scrollTop = 0;
   };
@@ -61,8 +56,8 @@
     }
   };
 
-  // ── PATCH 3: Theme Button ──
-  function ensureThemeButton() {
+  // ── PATCH 3: Theme ──
+  function syncThemeButton() {
     var btn = document.getElementById('theme-toggle-btn');
     if (!btn) {
       btn = document.createElement('button');
@@ -74,51 +69,95 @@
     btn.innerHTML = cur === 'dark' ? '☀️ Light' : '🌙 Dark';
   }
 
-  // ── PATCH 4: Company-Select Grid reparieren ──
-  // game.js DOMContentLoaded hook läuft bereits — wir ergänzen nur das Grid falls leer
-  function fixCompanySelect() {
-    var hasSave = false;
-    try { hasSave = !!localStorage.getItem('ae_v8_save'); } catch(e) {}
+  // ── PATCH 4: showCompanySelect() — zentraler Einstiegspunkt ──
+  // Diese Funktion wird von hardResetGame() und beim Erststart aufgerufen.
+  // Sie baut das Grid und zeigt den Screen an.
+  window.showCompanySelect = function() {
     var screen = document.getElementById('company-select');
     var grid   = document.getElementById('cs-grid');
     if (!screen) return;
 
-    if (hasSave) {
-      screen.style.display = 'none';
-      return;
-    }
+    // Grid immer neu aufbauen (Reset-Scenario: Grid muss neu befüllt werden)
+    if (grid) grid.innerHTML = '';
 
-    // Kein Save: Screen anzeigen, Grid befüllen wenn leer
+    try {
+      if (typeof buildCompanySelection === 'function') {
+        buildCompanySelection();
+      } else {
+        console.warn('buildCompanySelection not yet available');
+      }
+    } catch(e) { console.error('buildCompanySelection error:', e); }
+
+    // Start-Button verstecken bis Auswahl getroffen
+    var startBtn = document.getElementById('cs-start');
+    if (startBtn) startBtn.classList.remove('show');
+
+    // Info-Text leeren
+    var info = document.getElementById('cs-selected-info');
+    if (info) info.textContent = '';
+
+    // Screen einblenden
     screen.style.display = 'flex';
-    if (grid && grid.children.length === 0) {
-      try {
-        if (typeof buildCompanySelection === 'function') buildCompanySelection();
-      } catch(e) { console.warn('buildCompanySelection error:', e); }
+    screen.classList.remove('hide');
+    screen.style.animation = 'csFadeIn .5s ease';
+  };
+
+  // ── PATCH 5: hardResetGame() patchen ──
+  // game.js ruft am Ende von hardResetGame() bereits showCompanySelect (per cs.style.display='flex')
+  // aber das Grid ist dann leer weil buildCompanySelection() nicht nochmal aufgerufen wird.
+  // Wir wrappen hardResetGame() um showCompanySelect() danach sicher aufzurufen.
+  var _origHardReset = window.hardResetGame;
+  window.hardResetGame = function() {
+    if (typeof _origHardReset === 'function') {
+      _origHardReset.apply(this, arguments);
     }
-  }
+    // Nach Reset: Grid neu aufbauen
+    setTimeout(window.showCompanySelect, 50);
+  };
 
-  // ── PATCH 5: Sub-Nav aufbauen wenn leer ──
-  function fixSubNav() {
+  // ── PATCH 6: confirmReset() patchen ──
+  // confirmReset() ruft hardResetGame() auf — sicherstellen dass unsere Version greift
+  var _origConfirmReset = window.confirmReset;
+  window.confirmReset = function() {
+    try { localStorage.removeItem('ae_v8_save'); } catch(e) {}
+    var box = document.getElementById('reset-confirm');
+    if (box) box.remove();
+    if (typeof window.hardResetGame === 'function') window.hardResetGame();
+  };
+
+  // ── PATCH 7: Erststart ohne Save ──
+  function handleFirstStart() {
+    var hasSave = false;
+    try { hasSave = !!localStorage.getItem('ae_v8_save'); } catch(e) {}
+
+    if (hasSave) {
+      // Save vorhanden — Company Select verstecken, game.js lädt normal
+      var screen = document.getElementById('company-select');
+      if (screen) screen.style.display = 'none';
+    } else {
+      // Kein Save — Grid aufbauen (game.js DOMContentLoaded hat es evtl. schon versucht)
+      var grid = document.getElementById('cs-grid');
+      if (grid && grid.children.length === 0) {
+        window.showCompanySelect();
+      }
+    }
+
+    // Sub-Nav aufbauen falls leer
     var subNav = document.getElementById('sub-nav');
-    if (!subNav || subNav.children.length > 0) return;
-    var firstBtn = document.querySelector('.nc.on') || document.querySelector('.nc');
-    if (firstBtn) window.setNavCat('zentrale', firstBtn);
+    if (subNav && subNav.children.length === 0) {
+      var firstBtn = document.querySelector('.nc.on') || document.querySelector('.nc');
+      if (firstBtn) window.setNavCat('zentrale', firstBtn);
+    }
+
+    syncThemeButton();
+    console.log('✅ Patch v4 — done. Save:', hasSave);
   }
 
-  // ── HAUPTLAUF ──
-  // game.js init() läuft mit setTimeout(...) intern.
-  // Wir laufen bei 500ms — nach allen internen game.js Timeouts.
-  function runPatches() {
-    fixCompanySelect();
-    fixSubNav();
-    ensureThemeButton();
-    console.log('✅ Patch v3 done');
-  }
-
+  // Bei 600ms laufen — nach game.js init() (100ms) und allen internen Timeouts
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() { setTimeout(runPatches, 500); });
+    document.addEventListener('DOMContentLoaded', function() { setTimeout(handleFirstStart, 600); });
   } else {
-    setTimeout(runPatches, 500);
+    setTimeout(handleFirstStart, 600);
   }
 
 })();
