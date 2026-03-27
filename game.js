@@ -4097,3 +4097,148 @@ window.renderAll = function() {
 };
 
 console.log('✅ Realism Layer loaded — Supply Chain · Bottleneck Engine · Health Overview');
+// ── NEW TWO-TIER NAVIGATION SYSTEM ──
+const NAV_MAP={
+  zentrale: [{id:'dash',l:'📊 Dash'},{id:'news',l:'📰 News'},{id:'ziele',l:'🎯 Ziele'},{id:'kampagne',l:'📖 Kampagne'},{id:'ranking',l:'🏆 Ranking'},{id:'speichern',l:'💾 Speichern'},{id:'story',l:'📚 Geschichte'}],
+  produktion: [{id:'kompo',l:'⚙️ Bauteile'},{id:'fahr',l:'🚗 Fahrzeuge'},{id:'prod',l:'🔧 Produktion'},{id:'werke',l:'🏭 Werke'},{id:'tuning',l:'🔩 Tuning'},{id:'konzept',l:'💡 Konzepte'}],
+  forschung: [{id:'forsch',l:'🔬 Forschung'},{id:'forschlab',l:'🧪 Labor'},{id:'patente',l:'📜 Patente'},{id:'ingenieure',l:'🧑‍🔬 Ingenieure'},{id:'qualitaet',l:'⭐ Qualität'},{id:'roadmap',l:'⚡ E-Roadmap'}],
+  markt: [{id:'markt',l:'🌍 Marktanteile'},{id:'region',l:'🗺️ Regionen'},{id:'weltkarte',l:'🌐 Weltkarte'},{id:'absatz',l:'📦 Absatz'},{id:'showrooms',l:'🏪 Showrooms'},{id:'werb',l:'📺 Werbung'},{id:'fahrzeugmarkt',l:'🏷️ Preise'}],
+  wirtschaft: [{id:'fin',l:'💹 Finanzen'},{id:'boerse',l:'📈 Börse'},{id:'bank',l:'🏦 Bank'},{id:'aktien2',l:'💼 Portfolio'},{id:'fusion2',l:'🔀 M&A'},{id:'weltmarkt',l:'🌐 Makro-Ökonomie'}],
+  strategie: [{id:'rohstoff',l:'⛏️ Rohstoffe'},{id:'lieferkette',l:'⛓️ Lieferkette'},{id:'lieferant2',l:'🤝 Partner'},{id:'politik',l:'🏛️ Politik'},{id:'personal',l:'👷 Personal'},{id:'nachhaltigkeit',l:'🌱 ESG'},{id:'mitbewerber2',l:'⚡ Rivalität'}],
+  spezial: [{id:'spionage',l:'🕵️ Spionage'},{id:'blackmarket',l:'🕶️ Schwarzm.'},{id:'wetter',l:'🌩️ Krisen'},{id:'kiangriff',l:'🎯 KI-Angriff'},{id:'embargo',l:'🚫 Embargo'},{id:'saison',l:'🍂 Saison'},{id:'racing',l:'🏎️ Racing'},{id:'auto',l:'🤖 Automat.'},{id:'ankuendigungen',l:'📢 Ankündig.'}]
+};
+
+let currentCat='zentrale';
+window.setNavCat = function(cat, el) {
+  currentCat=cat;
+  document.querySelectorAll('.nc').forEach(e=>e.classList.remove('on'));
+  if(el) el.classList.add('on');
+  let html = '';
+  NAV_MAP[cat].forEach(n => {
+    html += `<button class="nsb" id="nsb-${n.id}" onclick="sv('${n.id}',this)">${n.l}</button>`;
+  });
+  setHTML('sub-nav', html);
+  // Auto-open first
+  if(NAV_MAP[cat].length > 0) sv(NAV_MAP[cat][0].id, document.getElementById(`nsb-${NAV_MAP[cat][0].id}`));
+};
+
+// Override standard sv slightly to handle .nsb active states
+const _origSv = window.sv;
+window.sv = function(v, el) {
+  document.querySelectorAll('.view').forEach(e=>e.classList.remove('on'));
+  let tgt = document.getElementById('v-'+v);
+  if(tgt) tgt.classList.add('on');
+  document.querySelectorAll('.nsb').forEach(e=>e.classList.remove('on'));
+  if(el) el.classList.add('on');
+  else {
+     let sel = document.getElementById('nsb-'+v);
+     if(sel) sel.classList.add('on');
+  }
+};
+
+// ── OPTION B: FEINDLICHE ÜBERNAHMEN & MONOPOLE ──
+
+// Initiierung der Daten
+if(typeof G.rivalShares === 'undefined') G.rivalShares = {};
+if(typeof G.takenOver === 'undefined') G.takenOver = {};
+
+// Override renderAll to include our new render function
+const _oldRenderAll_v2 = window.renderAll;
+window.renderAll = function() {
+    if(_oldRenderAll_v2) _oldRenderAll_v2();
+    renderFusion2();
+};
+
+function renderFusion2() {
+    let html = '';
+    RIVALS.forEach(r => {
+        if (!G.rivalShares[r.id]) G.rivalShares[r.id] = 0;
+        let owned = G.rivalShares[r.id];
+        let val = r.ca; // Valuation
+        let cost10Pct = val * 0.1;
+        let isOwned = G.takenOver[r.id];
+        
+        let actions = ``;
+        if (isOwned) {
+            actions = `<div style="color:var(--cy);font-weight:700;margin-top:5px;">✅ 100% Tochtergesellschaft</div>
+                       <div style="font-size:10px;color:var(--dm);">- Sämtliche Marktanteile addiert<br>- Gewinne fließen in deinen Konzern</div>`;
+        } else {
+            actions = `<div style="display:flex;gap:5px;margin-top:8px;">
+                <button class="btn sm cy-b" onclick="buyRivalShare('${r.id}', 10)" ${G.money < cost10Pct || owned >= 50 ? 'disabled' : ''}>📈 10% kaufen (€${fm(cost10Pct)})</button>
+                <button class="btn sm rd-b" onclick="hostileTakeover('${r.id}')" ${owned < 50 || G.money < (val*0.5) ? 'disabled' : ''}>💥 Feindliche Übernahme (€${fm(val*0.5)})</button>
+            </div>`;
+        }
+
+        html += `<div class="card" style="margin-bottom:8px;border-left:4px solid ${r.cl};">
+            <div style="display:flex;justify-content:space-between;">
+                <div>
+                    <div style="font-size:16px;font-weight:800;">${r.ic} ${r.n} ${r.co}</div>
+                    <div style="font-size:11px;color:var(--dm);">Unternehmenswert: <b style="color:var(--go)">€${fm(val)}</b> • Marktanteil: <b style="color:var(--gn)">${r.sh.toFixed(1)}%</b></div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:10px;color:var(--dm);">Deine Anteile</div>
+                    <div style="font-size:18px;font-weight:900;color:${owned>=50?'var(--cy)':'var(--gn)'};">${owned}%</div>
+                </div>
+            </div>
+            <div class="pw" style="margin-top:6px;height:6px;"><div class="pb ${owned>=50?'cy':'gr'}" style="width:${owned}%"></div></div>
+            ${actions}
+        </div>`;
+    });
+    setHTML('acquisition-list', html);
+    setTxt('ma-deals', Object.keys(G.takenOver).length);
+    let pfVal = 0;
+    RIVALS.forEach(r => pfVal += r.ca * (G.rivalShares[r.id] || 0) / 100);
+    setTxt('ma-val', `€${fm(pfVal)}`);
+}
+
+window.buyRivalShare = function(id, pct) {
+    let r = RIVALS.find(x => x.id === id);
+    if (!r) return;
+    let cost = r.ca * (pct / 100);
+    if (G.money >= cost) {
+        G.money -= cost;
+        G.rivalShares[r.id] = (G.rivalShares[r.id] || 0) + pct;
+        notify(`Du hast ${pct}% von ${r.n} gekauft!`, 'ok');
+        addEv(`📉 <span style="color:var(--cy)">Aktienkauf: ${pct}% von ${r.ic} ${r.n}</span>`);
+        renderAll();
+    } else {
+        notify('Nicht genug Kapital!', 'err');
+    }
+};
+
+window.hostileTakeover = function(id) {
+    let r = RIVALS.find(x => x.id === id);
+    if (!r) return;
+    let cost = r.ca * 0.5; // Restliche 50%
+    if (G.money >= cost && G.rivalShares[r.id] >= 50 && !G.takenOver[r.id]) {
+        G.money -= cost;
+        G.rivalShares[r.id] = 100;
+        G.takenOver[r.id] = true;
+        // Merge effects
+        G.share += r.sh; // Take their market share
+        r.sh = 0; // They disappear from market
+        G.rep = Math.min(100, G.rep + 10);
+        showBurst(`${r.n} ÜBERNOMMEN!`, 'Du hast einen Giganten zerschlagen!', 'Monopol wächst');
+        addEv(`💥 <span style="color:var(--rd)">FEINDLICHE ÜBERNAHME: ${r.ic} ${r.n} gehört nun dir!</span>`);
+        notify(`Übernahme erfolgreich! +Marktanteil`, 'ok');
+        renderAll();
+    }
+};
+
+// Also hook into tick to simulate revenue flow from taken over companies
+const _oldTick_v2 = window.tick || function(){};
+window.tick = function() {
+    _oldTick_v2();
+    if (G.tc % 10 === 0) { // Every 10 seconds, get some passive income
+        let passiveIncome = 0;
+        RIVALS.forEach(r => {
+            if (G.takenOver[r.id]) {
+                passiveIncome += r.ca * 0.0001; // Tiny steady stream
+            }
+        });
+        if (passiveIncome > 0) {
+            G.money += passiveIncome;
+            floatMoney(passiveIncome, true);
+        }
+    }
+};

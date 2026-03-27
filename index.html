@@ -45,57 +45,16 @@
   </div>
 </div>
 <div class="ticker"><div class="ticker-in" id="tick-inner"></div></div>
-<div class="nav">
-  <button class="nb on"  onclick="sv('dash',this)">📊 Dash</button>
-  <button class="nb"     onclick="sv('kompo',this)">⚙️ Bauteile</button>
-  <button class="nb"     onclick="sv('fahr',this)">🚗 Fahrzeuge</button>
-  <button class="nb"     onclick="sv('prod',this)">🔧 Produktion</button>
-  <button class="nb"     onclick="sv('forsch',this)">🔬 Forschung</button>
-  <button class="nb"     onclick="sv('markt',this)">🌍 Markt</button>
-  <button class="nb"     onclick="sv('region',this)">🗺️ Regionen</button>
-  <button class="nb"     onclick="sv('rohstoff',this)">⛏️ Rohstoffe</button>
-  <button class="nb"     onclick="sv('personal',this)">👷 Personal</button>
-  <button class="nb"     onclick="sv('boerse',this)">📈 Börse</button>
-  <button class="nb"     onclick="sv('bank',this)">🏦 Bank</button>
-  <button class="nb"     onclick="sv('politik',this)">🏛️ Politik</button>
-  <button class="nb"     onclick="sv('racing',this)">🏎️ Racing</button>
-  <button class="nb"     onclick="sv('spionage',this)">🕵️ Spionage</button>
-  <button class="nb"     onclick="sv('patente',this)">📜 Patente</button>
-  <button class="nb"     onclick="sv('showrooms',this)">🏪 Showrooms</button>
-  <button class="nb"     onclick="sv('werb',this)">📺 Werbung</button>
-  <button class="nb"     onclick="sv('auto',this)">🤖 Automat.</button>
-  <button class="nb"     onclick="sv('werke',this)">🏭 Werke</button>
-  <button class="nb"     onclick="sv('tuning',this)">🔩 Tuning</button>
-  <button class="nb"     onclick="sv('konzept',this)">💡 Konzepte</button>
-  <button class="nb"     onclick="sv('roadmap',this)">⚡ E-Road</button>
-  <button class="nb"     onclick="sv('embargo',this)">🚫 Embargo</button>
-  <button class="nb"     onclick="sv('wetter',this)">🌩️ Krisen</button>
-  <button class="nb"     onclick="sv('kiangriff',this)">🎯 KI-Angriff</button>
-  <button class="nb"     onclick="sv('saison',this)">🍂 Saison</button>
-  <button class="nb"     onclick="sv('qualitaet',this)">⭐ Qualität</button>
-  <button class="nb"     onclick="sv('blackmarket',this)">🕶️ Schwarzm.</button>
-  <button class="nb"     onclick="sv('ingenieure',this)">🧑‍🔬 Ingenieure</button>
-  <button class="nb"     onclick="sv('kampagne',this)">📖 Kampagne</button>
-  <button class="nb"     onclick="sv('ranking',this)">🏆 Ranking</button>
-  <button class="nb"     onclick="sv('weltkarte',this)">🌐 Weltkarte</button>
-  <button class="nb"     onclick="sv('fin',this)">💹 Finanzen</button>
-  <button class="nb"     onclick="sv('speichern',this)">💾 Speichern</button>
-  <button class="nb"     onclick="sv('aktien2',this)">💼 Portfolio</button>
-  <button class="nb"     onclick="sv('news',this)">📰 News</button>
-  <button class="nb"     onclick="sv('ziele',this)">🎯 Ziele</button>
-  <button class="nb"     onclick="sv('lieferant2',this)">🤝 Partner</button>
-  <button class="nb"     onclick="sv('forschlab',this)">🧪 F&E Labor</button>
-  <button class="nb"     onclick="sv('fahrzeugmarkt',this)">🏷️ Fahrzeugmarkt</button>
-  <button class="nb"     onclick="sv('mitbewerber2',this)">⚡ Rivalität</button>
-  <button class="nb"     onclick="sv('wirtschaft',this)">💰 Wirtschaft</button>
-  <button class="nb"     onclick="sv('ankuendigungen',this)">📢 Ankündig.</button>
-  <button class="nb"     onclick="sv('fusion2',this)">🔀 M&amp;A</button>
-  <button class="nb"     onclick="sv('lieferkette',this)">⛓️ Lieferkette</button>
-  <button class="nb"     onclick="sv('nachhaltigkeit',this)">🌱 ESG</button>
-  <button class="nb"     onclick="sv('absatz',this)">📦 Absatz</button>
-  <button class="nb"     onclick="sv('weltmarkt',this)">🌐 Weltmarkt</button>
-  <button class="nb"     onclick="sv('story',this)">📚 Geschichte</button>
+<div class="nav-cats" id="main-nav">
+  <button class="nc on" onclick="setNavCat('zentrale',this)">🏠 Zentrale</button>
+  <button class="nc" onclick="setNavCat('produktion',this)">🚗 Produktion</button>
+  <button class="nc" onclick="setNavCat('forschung',this)">🔬 Innovation</button>
+  <button class="nc" onclick="setNavCat('markt',this)">🌍 Globaler Markt</button>
+  <button class="nc" onclick="setNavCat('wirtschaft',this)">💹 Wirtschaft</button>
+  <button class="nc" onclick="setNavCat('strategie',this)">⚖️ Strategie</button>
+  <button class="nc" onclick="setNavCat('spezial',this)">🛡️ Schattenkabinett</button>
 </div>
+<div class="nav-sub" id="sub-nav"></div>
 <div id="content">
 <div class="view on" id="v-dash">
   <div id="ev-alerts"></div>
