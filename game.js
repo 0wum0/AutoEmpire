@@ -128,9 +128,55 @@ const G = {
 };
 
 // ── DATA ──
-// COMPS is now loaded dynamically from DB via Twig
+const COMPS=[
+  {id:'eng_base',cat:'Antrieb',   name:'4-Zyl. Benziner', icon:'­ƒöº',cost:50000, inc:15000,max:10,req:{steel:50,aluminum:20}},
+  {id:'eng_v6',  cat:'Antrieb',   name:'V6 3.0L',         icon:'­ƒöÑ',cost:150000,inc:40000,max:8, req:{steel:80,aluminum:40}},
+  {id:'eng_dsl', cat:'Antrieb',   name:'Diesel TDI',      icon:'Ôø¢',cost:80000, inc:20000,max:8, req:{steel:60,aluminum:30}},
+  {id:'eng_elec',cat:'Antrieb',   name:'E-Motor',         icon:'ÔÜí',cost:300000,inc:80000,max:10,req:{elec:100,aluminum:50}},
+  {id:'eng_hyb', cat:'Antrieb',   name:'Hybrid',          icon:'­ƒî┐',cost:250000,inc:60000,max:6, req:{elec:80,steel:40}},
+  {id:'eng_v8',  cat:'Antrieb',   name:'V8 Sport 5.0L',  icon:'­ƒÅÄ´©Å',cost:500000,inc:100000,max:5,req:{steel:120,aluminum:80}},
+  {id:'trans',   cat:'Antrieb',   name:'Getriebewerk',    icon:'ÔÜÖ´©Å',cost:180000,inc:45000,max:6, req:{steel:70,aluminum:40}},
+  {id:'body_st', cat:'Karosserie',name:'Stahlkarosserie', icon:'­ƒö®',cost:40000, inc:10000,max:10,req:{steel:100}},
+  {id:'body_alu',cat:'Karosserie',name:'Aluminiumrahmen', icon:'­ƒ¬¿',cost:120000,inc:30000,max:8, req:{aluminum:80}},
+  {id:'body_cfk',cat:'Karosserie',name:'Carbon Fiber',    icon:'­ƒûñ',cost:800000,inc:150000,max:5,req:{aluminum:100,elec:20}},
+  {id:'press',   cat:'Karosserie',name:'Presswerk 4000t', icon:'­ƒÅù´©Å',cost:200000,inc:50000,max:6, req:{steel:200,energy:50}},
+  {id:'chassis', cat:'Fahrwerk',  name:'Basis-Plattform', icon:'­ƒöù',cost:60000, inc:15000,max:10,req:{steel:80,rubber:30}},
+  {id:'susp_sp', cat:'Fahrwerk',  name:'Sport-Fahrwerk',  icon:'­ƒÅü',cost:180000,inc:40000,max:6, req:{steel:60,elec:30}},
+  {id:'awd',     cat:'Fahrwerk',  name:'Allradantrieb',   icon:'­ƒîÇ',cost:250000,inc:60000,max:5, req:{steel:100,elec:40}},
+  {id:'axles',   cat:'Fahrwerk',  name:'Achswerk',        icon:'­ƒöä',cost:100000,inc:25000,max:8, req:{steel:90,aluminum:30}},
+  {id:'int_base',cat:'Innenraum', name:'Std. Interieur',  icon:'­ƒ¬æ',cost:30000, inc:8000, max:10,req:{plastic:80,rubber:20}},
+  {id:'int_lux', cat:'Innenraum', name:'Luxus-Ausstattung',icon:'­ƒÆÄ',cost:400000,inc:80000,max:6,req:{plastic:100,elec:50}},
+  {id:'infotn',  cat:'Innenraum', name:'Infotainment',    icon:'­ƒô▒',cost:150000,inc:35000,max:8, req:{elec:100}},
+  {id:'adas',    cat:'Elektronik',name:'ADAS Safety',     icon:'­ƒøí´©Å',cost:350000,inc:70000,max:6, req:{elec:150}},
+  {id:'battery', cat:'Elektronik',name:'Batteriepaket',   icon:'­ƒöï',cost:500000,inc:100000,max:8,req:{elec:200,aluminum:50}},
+  {id:'paint',   cat:'Fertigung', name:'Lackierstra├ƒe',   icon:'­ƒÄ¿',cost:80000, inc:20000,max:10,req:{energy:30,plastic:40}},
+  {id:'quality', cat:'Fertigung', name:'Qualit├ñtskontrolle',icon:'Ô£à',cost:120000,inc:25000,max:8,req:{elec:60}},
+  {id:'weldbot', cat:'Fertigung', name:'Schwei├ƒroboter',  icon:'­ƒñû',cost:300000,inc:60000,max:8, req:{steel:50,energy:80}},
+  {id:'assembly',cat:'Fertigung', name:'Montageband',     icon:'­ƒÅ¡',cost:500000,inc:100000,max:6,req:{energy:100}},
+  {id:'eng_v10', cat:'Antrieb',   name:'V10 Hyper',       icon:'­ƒöÑ',cost:800000,inc:150000,max:4,req:{steel:150,aluminum:100}},
+  {id:'bat_gra', cat:'Elektronik',name:'Graphen-Akku',    icon:'­ƒöï',cost:900000,inc:120000,max:5,req:{elec:300,aluminum:100}},
+  {id:'cam_mir', cat:'Elektronik',name:'Kamera-Spiegel',  icon:'­ƒôÀ',cost:200000,inc:40000,max:8,req:{elec:80}},
+  {id:'aero_kit',cat:'Karosserie',name:'Aero-Kit',        icon:'­ƒî¬´©Å',cost:300000,inc:50000,max:6,req:{plastic:100,aluminum:50}},
+  {id:'solar_rf',cat:'Innenraum', name:'Solar-Dach',      icon:'ÔÿÇ´©Å',cost:250000,inc:60000,max:6,req:{elec:100,aluminum:30}},
+];
 
-// VEHS is now loaded dynamically from DB via Twig
+const VEHS=[
+  {id:'polo',   name:'Polo Neo',   e:'­ƒÜÖ',seg:'Kleinstwagen',price:18900, pc:9000, t:120,cap:8,req:['eng_base','body_st','chassis']},
+  {id:'golf',   name:'Golf X',     e:'­ƒÜù',seg:'Kompakt',     price:28500, pc:14000,t:150,cap:6,req:['eng_base','body_st','chassis','int_base']},
+  {id:'passat', name:'Passat Evo', e:'­ƒÜò',seg:'Mittelklasse',price:38000, pc:19000,t:180,cap:4,req:['eng_v6','body_alu','chassis']},
+  {id:'tiguan', name:'Tiguan Pro', e:'­ƒø╗',seg:'SUV',         price:45000, pc:22000,t:200,cap:4,req:['eng_v6','body_alu','awd']},
+  {id:'touareg',name:'Touareg X',  e:'­ƒÜÉ',seg:'Luxury SUV',  price:75000, pc:38000,t:240,cap:2,req:['eng_v6','body_alu','awd','int_lux']},
+  {id:'id4',    name:'ID.4 Evo',   e:'ÔÜí',seg:'E-SUV',       price:52000, pc:28000,t:220,cap:3,req:['eng_elec','body_alu','battery']},
+  {id:'arteon', name:'Arteon R',   e:'­ƒÅü',seg:'Sport',       price:58000, pc:29000,t:240,cap:2,req:['eng_v6','body_alu','susp_sp']},
+  {id:'id_buzz',name:'ID. Buzz',   e:'­ƒÜî',seg:'E-Van',       price:65000, pc:34000,t:260,cap:2,req:['eng_elec','body_alu','battery','infotn']},
+  {id:'phaeton',name:'Phaeton II', e:'­ƒÜÇ',seg:'Ultra Luxury',price:120000,pc:58000,t:480,cap:1,req:['eng_v8','body_cfk','int_lux','adas']},
+  {id:'beetle', name:'Beetle-E',   e:'­ƒÉ×',seg:'E-Kult',      price:35000, pc:16000,t:160,cap:4,req:['eng_elec','body_st','infotn']},
+  {id:'micro_e',name:'Micro-E',e:'­ƒÜù',seg:'Kleinstwagen',price:15000,pc:7000,t:100,cap:6,req:['eng_elec','body_st']},
+  {id:'offroad',name:'Offroad 4x4',e:'­ƒÜÖ',seg:'SUV',price:55000,pc:28000,t:220,cap:3,req:['eng_v6','body_st','awd']},
+  {id:'lux_van',name:'Luxury Van',e:'­ƒÜÉ',seg:'Luxury Van',price:85000,pc:42000,t:250,cap:2,req:['eng_v6','body_alu','int_lux']},
+  {id:'hyper_v10',name:'Hypercar V10',e:'­ƒÅÄ´©Å',seg:'Ultra Luxury',price:250000,pc:110000,t:500,cap:1,req:['eng_v10','body_cfk','susp_sp','int_lux']},
+  {id:'aero_con',name:'Aero Concept',e:'­ƒø©',seg:'Sport',price:95000,pc:45000,t:280,cap:2,req:['eng_elec','body_cfk','aero_kit']},
+];
 
 const FACS=[
   {id:'wolfsburg',name:'Wolfsburg Hauptwerk',city:'Wolfsburg, DE', cost:0,       workers:200,eff:1.0,icon:'🏭'},
@@ -142,9 +188,30 @@ const FACS=[
   {id:'zwickau',  name:'Zwickau E-Werk',     city:'Zwickau, DE',   cost:12000000,workers:220,eff:1.1,icon:'⚡'},
 ];
 
-// RD is now loaded dynamically from DB via Twig
+const RD=[
+  {cat:'­ƒöº Antrieb',items:[{id:'turbo',name:'Turboaufladung',icon:'­ƒÆ¿',cost:100000,desc:'+15%'},{id:'fsi',name:'Direkteinspritz.',icon:'Ôø¢',cost:200000,desc:'-10% Verbr.'},{id:'startstop',name:'Start-Stop',icon:'­ƒöä',cost:150000,desc:'Stadt -8%'},{id:'mild48',name:'48V Mildhybrid',icon:'­ƒî┐',cost:400000,desc:'CO2 -20%'},{id:'solid',name:'Feststoffakku',icon:'­ƒöï',cost:1000000,desc:'Reichw. +50%'}]},
+  {cat:'­ƒøí´©Å Sicherheit',items:[{id:'abs',name:'ABS & ESP',icon:'­ƒÜª',cost:80000,desc:'+NCAP'},{id:'airbag',name:'Multi-Airbag',icon:'­ƒøí´©Å',cost:120000,desc:'8 Airbags'},{id:'lane',name:'Lane Assist',icon:'­ƒôÅ',cost:200000,desc:'+Rep'},{id:'l2',name:'Level 2 Auto.',icon:'­ƒñû',cost:600000,desc:'Teilautonom'},{id:'l4',name:'Level 4 Auto.',icon:'­ƒÜù',cost:2000000,desc:'Hochautonom'}]},
+  {cat:'­ƒÅ¡ Produktion',items:[{id:'lean',name:'Lean Production',icon:'ÔÜí',cost:150000,desc:'Kosten -8%'},{id:'jit',name:'Just-in-Time',icon:'­ƒôª',cost:200000,desc:'Lager -30%'},{id:'aiq',name:'KI Qualit├ñt',icon:'­ƒö¼',cost:400000,desc:'Ausschuss /2'},{id:'cobot',name:'Koll. Roboter',icon:'­ƒñû',cost:600000,desc:'+20% Out.'},{id:'giga',name:'Gigapress',icon:'­ƒÅù´©Å',cost:3000000,desc:'CF Guss'}]},
+  {cat:'­ƒº¬ Material',items:[{id:'alubody',name:'Alu-Bauweise',icon:'­ƒ¬¿',cost:180000,desc:'-12% Gew.'},{id:'cfk',name:'CfK Mischbau',icon:'­ƒûñ',cost:500000,desc:'-25kg'},{id:'recycle',name:'Recycling',icon:'ÔÖ╗´©Å',cost:250000,desc:'-10% Mat.'},{id:'nano',name:'Nano-Beschicht.',icon:'Ô£¿',cost:350000,desc:'20J Schutz'}]},
+  {cat:'­ƒÆ╗ Digital',items:[{id:'ota',name:'OTA Updates',icon:'­ƒôí',cost:300000,desc:'Remote SW'},{id:'twin',name:'Digit. Zwilling',icon:'­ƒæ»',cost:800000,desc:'Entw. -40%'},{id:'5g',name:'5G Konnektivit├ñt',icon:'­ƒôÂ',cost:400000,desc:'Connected'},{id:'ar',name:'AR Design',icon:'­ƒòÂ´©Å',cost:600000,desc:'Design 2x'}]},
+  {cat:'­ƒîî 30 Bonus',items:[{id:'holo_ui',name:'Hologramm UI',icon:'­ƒûÑ´©Å',cost:500000,desc:'Rep +15'},{id:'hyper_charge',name:'Hypercharge',icon:'ÔÜí',cost:750000,desc:'Laden +50%'},{id:'bio_plas',name:'Bio-Kunststoff',icon:'­ƒî▒',cost:400000,desc:'ESG +20'},{id:'ai_chassis',name:'KI Chassis',icon:'­ƒºá',cost:900000,desc:'Gewicht -15%'},{id:'solid_recyc',name:'Feststoff-Recycling',icon:'ÔÖ╗´©Å',cost:600000,desc:'Mat -15%'}]},
+  {cat:'­ƒîî Bonus',items:[{id:'holo_ui',name:'Hologramm UI',icon:'­ƒûÑ´©Å',cost:500000,desc:'Rep +15'},{id:'hyper_charge',name:'Hypercharge',icon:'ÔÜí',cost:750000,desc:'Laden +50%'},{id:'bio_plas',name:'Bio-Kunststoff',icon:'­ƒî▒',cost:400000,desc:'ESG +20'},{id:'ai_chassis',name:'KI Chassis',icon:'­ƒºá',cost:900000,desc:'Gewicht -15%'},{id:'solid_recyc',name:'Feststoff-Recycling',icon:'ÔÖ╗´©Å',cost:600000,desc:'Mat -15%'}]},
+];
 
-// ADS is now loaded dynamically from DB via Twig
+const ADS=[
+  {id:'tv',  name:'TV Werbespots',   icon:'­ƒô║',cost:5000, eff:'+3% Nachfrage',ev:.03},
+  {id:'soc', name:'Social Media',    icon:'­ƒô▒',cost:3000, eff:'+5% Junge K├ñufer',ev:.05},
+  {id:'f1',  name:'Motorsport',      icon:'­ƒÅÄ´©Å',cost:25000,eff:'+8% Reputation',ev:.08},
+  {id:'infl',name:'Influencer',      icon:'Ô¡É',cost:8000, eff:'+6% Awareness',ev:.06},
+  {id:'iaa', name:'Automesse IAA',   icon:'­ƒÅø´©Å',cost:15000,eff:'+10% H├ñndler',ev:.10},
+  {id:'eco', name:'Gr├╝ne PR',        icon:'­ƒî┐',cost:6000, eff:'+7% ESG',ev:.07},
+  {id:'mag', name:'Luxus-Magazin',   icon:'­ƒÆÄ',cost:12000,eff:'+5% Premium',ev:.05},
+  {id:'esports',name:'eSports Sponsoring',icon:'­ƒÄ«',cost:10000, eff:'+6% Junge',ev:.06},
+  {id:'mega_ad',name:'Mega-Event Spot',   icon:'­ƒÅƒ´©Å',cost:35000, eff:'+12% Reach',ev:.12},
+  {id:'viral',  name:'Viral-Kampagne',    icon:'­ƒªá',cost:4000,  eff:'+5% Reichw.',ev:.05},
+  {id:'podcast',name:'Tech-Podcast',      icon:'­ƒÄº',cost:7000,  eff:'+4% Premium',ev:.04},
+  {id:'popup',  name:'Pop-Up-Store',      icon:'­ƒÅ¬',cost:20000, eff:'+8% H├ñndler',ev:.08},
+];
 
 const AUTOS=[
   {id:'a_steel', name:'Auto-Stahl',        desc:'Stahl auto-bestellen',    cost:200000},
@@ -156,9 +223,30 @@ const AUTOS=[
   {id:'supply',  name:'KI Lieferkette',   desc:'Materialkosten -15%',     cost:900000},
 ];
 
-// RIVALS is now loaded dynamically from DB via Twig
+const RIVALS=[
+  {id:'bmw',    n:'BMW GROUP',    ic:'­ƒöÁ',co:'­ƒç®­ƒç¬',cl:'#1C69D4',sh:18,ca:50e6,ag:.7},
+  {id:'merc',   n:'MERCEDES',     ic:'Ô¡É',co:'­ƒç®­ƒç¬',cl:'#aaa',   sh:16,ca:60e6,ag:.5},
+  {id:'toyota', n:'TOYOTA',       ic:'­ƒö┤',co:'­ƒç»­ƒçÁ',cl:'#E62333',sh:14,ca:80e6,ag:.6},
+  {id:'ford',   n:'FORD',         ic:'­ƒöÀ',co:'­ƒç║­ƒç©',cl:'#003499',sh:11,ca:40e6,ag:.8},
+  {id:'stell',  n:'STELLANTIS',   ic:'­ƒîÉ',co:'­ƒç¬­ƒç║',cl:'#FF8C00',sh:9, ca:30e6,ag:.7},
+  {id:'hyundai',n:'HYUNDAI-KIA',  ic:'­ƒöÂ',co:'­ƒç░­ƒçÀ',cl:'#0057a8',sh:10,ca:35e6,ag:.9},
+  {id:'tesla',  n:'TESLA',        ic:'ÔÜí',co:'­ƒç║­ƒç©',cl:'#cc0000',sh:8, ca:70e6,ag:1.0},
+  {id:'renault',n:'RENAULT',      ic:'­ƒÆø',co:'­ƒç½­ƒçÀ',cl:'#FFCC00',sh:7, ca:25e6,ag:.6},
+];
 
-// CEO_POOL is now loaded dynamically from DB via Twig
+const CEO_POOL=[
+  {name:'Dr. Eva M├╝ller', emoji:'­ƒæ®ÔÇì­ƒÆ╝',spec:'Effizienz',  bonus:'Prod.kosten -10%',effect:'prodCost',val:.9},
+  {name:'Hans Bergmann',  emoji:'­ƒæ¿ÔÇì­ƒÆ╝',spec:'Expansion', bonus:'Werke -20% Kosten',effect:'facCost', val:.8},
+  {name:'Yuki Tanaka',    emoji:'­ƒæ®ÔÇì­ƒö¼',spec:'Technologie',bonus:'F&E +50% Speed',   effect:'rdSpeed', val:1.5},
+  {name:'James Wilson',   emoji:'­ƒæ¿ÔÇì­ƒÆ╝',spec:'Marketing', bonus:'Werbeffekt +25%',   effect:'adBoost', val:1.25},
+  {name:'Sofia Reyes',    emoji:'­ƒæ®ÔÇì­ƒÆ╝',spec:'Nachhalt.',  bonus:'ESG +30',           effect:'esg',     val:1.3},
+  {name:'Klaus Schneider',emoji:'­ƒºô',  spec:'Finanzen',  bonus:'Zinsen -50%',       effect:'loanRate',val:.5},
+  {name:'Elena Techvision',emoji:'­ƒª¥',spec:'Technologie',bonus:'F&E -20%',effect:'rdCost',val:.8},
+  {name:'Markus Logistik',emoji:'­ƒôª',spec:'Lieferkette',bonus:'Material +15%',effect:'matBoost',val:1.15},
+  {name:'Stella Premium',emoji:'Ô£¿',spec:'Luxus',bonus:'Rep +10%',effect:'repBoost',val:1.1},
+  {name:'David Krisen',emoji:'­ƒøí´©Å',spec:'Risiko',bonus:'Risiko -30%',effect:'riskRed',val:.7},
+  {name:'Viktor Gold',emoji:'­ƒñæ',spec:'Finanzen',bonus:'Margin +5%',effect:'marginBoost',val:1.05},
+];
 
 const MISSIONS=[
   {id:0, name:'Erster Motor',      desc:'4-Zyl. Benziner Level 1',              check:()=>G.comp['eng_base']>=1,   r:20000},
@@ -198,7 +286,20 @@ const BM_ITEMS=[
   {id:'bm_pat', name:'Patentklau-Datensatz',  emoji:'📜',amt:1,   cost:50000,res:'patent',  risk:60,desc:'Sofort ein Patent — sehr riskant'},
 ];
 
-// EVENTS is now loaded dynamically from DB via Twig
+const EVENTS=[
+  {name:'├ûlpreisschock',     type:'crisis',emoji:'­ƒøó´©Å',desc:'Energiekosten +40%',    effect:'energy_cost', val:1.4,dur:120},
+  {name:'E-Mobilit├ñtsboom',  type:'good',  emoji:'ÔÜí',desc:'E-Fahrzeuge +30% Nachfr.',effect:'ev_demand',  val:1.3,dur:120},
+  {name:'Wirtschaftskrise',  type:'crisis',emoji:'­ƒôë',desc:'Preise -15%',            effect:'price_cut',   val:.85,dur:150},
+  {name:'Technologief├Ârder.',type:'good',  emoji:'­ƒÅø´©Å',desc:'+Ôé¼500k F├Ârderung',       effect:'money',       val:500000,dur:1},
+  {name:'Globaler Streik',   type:'crisis',emoji:'Ô£è',desc:'Produktion -50%',        effect:'prod_cut',    val:.5,dur:90},
+  {name:'Auto des Jahres',   type:'good',  emoji:'­ƒÅå',desc:'Rep +20',                effect:'rep',         val:20,dur:1},
+  {name:'Chip-Krise',        type:'crisis',emoji:'­ƒÆ╗',desc:'Elektronik -70%',        effect:'chip',        val:.3,dur:180},
+  {name:'Batterie-Durchbruch',type:'good',emoji:'­ƒöï',desc:'E-Nachfrage +40%',effect:'ev_demand',val:1.4,dur:150},
+  {name:'Hackerangriff',type:'crisis',emoji:'­ƒÆ╗',desc:'Prod. -30%',effect:'prod_cut',val:.7,dur:100},
+  {name:'Neue Subvention',type:'good',emoji:'­ƒÆ░',desc:'+Ôé¼1M F├Ârder.',effect:'money',val:1000000,dur:1},
+  {name:'Schwerer Sturm',type:'crisis',emoji:'Ôøê´©Å',desc:'Kosten +20%',effect:'price_cut',val:1.2,dur:120},
+  {name:'Rohstoff-Fund',type:'good',emoji:'ÔøÅ´©Å',desc:'Energie -40%',effect:'energy_cost',val:0.6,dur:150},
+];
 
 const SHOWROOM_LOCS=[
   {city:'Berlin',   flag:'🇩🇪',cost:200000,db:2},{city:'München',  flag:'🇩🇪',cost:250000,db:2},
@@ -4205,36 +4306,33 @@ window.loadGame = function() {
 
 // ── MULTIPLAYER ASYNC INIT ──
 document.addEventListener('DOMContentLoaded', async () => {
+    // Static game data is embedded in JS - no eval() needed!
+    // Only fetch multiplayer state (user_state, RIVALS)
     try {
-        const res = await fetch('api.php?action=init');
-        const textData = await res.text();
-        let data;
+        let data = null;
         try {
+            const res = await fetch('api.php?action=init');
+            const textData = await res.text();
             data = JSON.parse(textData);
         } catch(parsErr) {
-            console.error("API Response was not JSON:", textData);
-            document.body.innerHTML += '<div style="position:fixed;top:10px;left:10px;background:red;color:white;padding:10px;z-index:999999;">API Fehler: ' + textData.substring(0, 200) + '</div>';
-            if(typeof buildCompanySelection==='function') buildCompanySelection();
-            return;
+            console.warn("Multiplayer API nicht erreichbar - Offline-Modus");
+            data = null;
+        }
+        
+        // VEHS/COMPS/RD etc. are already defined globally in game.js - no need to load from DB!
+        // Only update RIVALS from multiplayer data
+        if (data && data.multiplayer_rivals) {
+            window.RIVALS = data.multiplayer_rivals;
         }
         
         if (data.error) {
             document.body.innerHTML += '<div style="position:fixed;top:10px;left:10px;background:red;color:white;padding:10px;z-index:999999;">Backend Fehler: ' + data.error + '</div>';
         }
 
-        // Restore globals with fallbacks
-        window.VEHS = data.configs && data.configs.VEHS ? eval('[' + data.configs.VEHS + ']') : [];
-        window.COMPS = data.configs && data.configs.COMPS ? eval('[' + data.configs.COMPS + ']') : [];
-        window.RD = data.configs && data.configs.RD ? eval('[' + data.configs.RD + ']') : [];
-        window.EVENTS = data.configs && data.configs.EVENTS ? eval('[' + data.configs.EVENTS + ']') : [];
-        window.ADS = data.configs && data.configs.ADS ? eval('[' + data.configs.ADS + ']') : [];
-        window.CEO_POOL = data.configs && data.configs.CEO_POOL ? eval('[' + data.configs.CEO_POOL + ']') : [];
-        
-        // Multiplayer Rivals
-        window.RIVALS = data.multiplayer_rivals || [];
+        // VEHS/COMPS/RD etc. are statically embedded - skip evals
         
         // Load cloud state
-        if(data.user_state && data.user_state.id) {
+        if(data && data.user_state && data.user_state.id) {
             window.G = data.user_state;
             if(typeof renderDash==='function') renderDash();
             if(typeof renderVeh==='function') renderVeh();
