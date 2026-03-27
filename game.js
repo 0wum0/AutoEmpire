@@ -2939,8 +2939,12 @@ function startWithCompany() {
   spawnPtcls(window.innerWidth*.7, window.innerHeight/2, '#ffaa00', 30);
   spawnPtcls(window.innerWidth/2, window.innerHeight*.3, '#00ff88', 25);
   showBurst(co.icon + ' ' + co.name, co.tag, '€' + fm(co.startMoney) + ' Startkapital');
-  // Render with company-aware bonuses
-  setTimeout(() => renderAll(), 200);
+  // Render with company-aware bonuses, then initialize sub-navigation
+  setTimeout(() => {
+    renderAll();
+    var firstNc = document.querySelector('.nc');
+    if(firstNc && typeof window.setNavCat === 'function') window.setNavCat('zentrale', firstNc);
+  }, 200);
 }
 
 // Apply company bonus in production tick
@@ -2966,6 +2970,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if(hasSave){
     // Have a save — hide company select, init() will load it
     screen.style.display = 'none';
+    // Initialize sub-navigation so buttons are visible immediately
+    var firstNc = document.querySelector('.nc');
+    if(firstNc && typeof window.setNavCat === 'function') window.setNavCat('zentrale', firstNc);
   } else {
     // No save — show company select
     if(typeof buildCompanySelection === 'function') buildCompanySelection();
