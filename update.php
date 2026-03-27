@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * AUTO EMPIRE — Database Update Tool
  * Integrates new/missing tables and columns into an existing installation.
@@ -168,6 +168,26 @@ $migrations = [
         ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci",
     ],
 
+    [
+        'id'   => 'v1_8_users_is_ai',
+        'desc' => 'Spalte is_ai in ae_users (KI-Spieler Flag)',
+        'sql'  => "ALTER TABLE ae_users ADD COLUMN IF NOT EXISTS is_ai TINYINT(1) DEFAULT 0",
+    ],
+    [
+        'id'   => 'v1_8_users_ai_strategy',
+        'desc' => 'Spalte ai_strategy in ae_users',
+        'sql'  => "ALTER TABLE ae_users ADD COLUMN IF NOT EXISTS ai_strategy VARCHAR(30) DEFAULT 'balanced'",
+    ],
+    [
+        'id'   => 'v1_8_users_company_id',
+        'desc' => 'Spalte company_id in ae_users (gewählter Konzern, Persistenz)',
+        'sql'  => "ALTER TABLE ae_users ADD COLUMN IF NOT EXISTS company_id VARCHAR(30) DEFAULT NULL",
+    ],
+    [
+        'id'   => 'v1_8_users_company_color',
+        'desc' => 'Spalte company_color in ae_users',
+        'sql'  => "ALTER TABLE ae_users ADD COLUMN IF NOT EXISTS company_color VARCHAR(7) DEFAULT '#00d4ff'",
+    ],
     // ── v1.6: Migrations-Tracking Tabelle ───────────────────────────────────
     [
         'id'   => 'v1_6_migrations_table',
