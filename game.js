@@ -1524,7 +1524,7 @@ function notify(msg,type){const a=document.getElementById('notifs');const d=docu
 function sv(id,btn){document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));const el=document.getElementById('v-'+id);if(el)el.classList.add('on');if(btn)btn.classList.add('on');document.getElementById('content').scrollTop=0;}
 function buildTicker(){const el=document.getElementById('tick-inner');if(!el)return;const ch=(G.stockHistory.length>1?(G.stockPrice/G.stockHistory[G.stockHistory.length-2]-1)*100:0);const items=[{t:'€'+fm(G.money),c:'p'},{t:'AKTIE €'+Math.round(G.stockPrice)+' ('+(ch>=0?'+':'')+ch.toFixed(1)+'%)',c:ch>=0?'p':'r'},{t:'MARKT '+G.share.toFixed(1)+'%',c:''},{t:'PROD '+fm(G.prod),c:'p'},...RIVALS.map(r=>({t:r.n.split(' ')[0]+' '+r.sh.toFixed(1)+'%',c:''})),{t:'SAISON: '+SEASON_CFG[G.season].name,c:'g'},{t:'AUTO EMPIRE v8',c:'g'}];el.innerHTML=items.map(i=>'<span class="ti '+i.c+'">◇ '+i.t+'</span>').join('');}
 
-// init(); // disabled for multiplayer
+// init() commented out by patch
 
 // ═══════════════════════════════════════════════════════
 //  AUTO EMPIRE v9  —  25 NEUE FEATURES + DESIGN FIXES
@@ -2898,125 +2898,146 @@ function applyCompanyBonus(rev, pc) {
 }
 
 // Init company selection on load
+/* Old DOMContentLoaded removed */
+// ── NAVIGATION & THEME (RESTORED FROM BACKUP) ──
+var _NAV = {
+  zentrale:   [{id:'dash',l:'📊 Dash'},{id:'news',l:'📰 News'},{id:'ziele',l:'🎯 Ziele'},{id:'kampagne',l:'📖 Kampagne'},{id:'ranking',l:'🏆 Ranking'},{id:'speichern',l:'💾 Speichern'},{id:'story',l:'📚 Geschichte'}],
+  produktion: [{id:'kompo',l:'⚙️ Bauteile'},{id:'fahr',l:'🚗 Fahrzeuge'},{id:'prod',l:'🔧 Produktion'},{id:'werke',l:'🏭 Werke'},{id:'tuning',l:'🔩 Tuning'},{id:'konzept',l:'💡 Konzepte'}],
+  forschung:  [{id:'forsch',l:'🔬 Forschung'},{id:'forschlab',l:'🧪 Labor'},{id:'patente',l:'📜 Patente'},{id:'ingenieure',l:'🧑‍🔬 Ingenieure'},{id:'qualitaet',l:'⭐ Qualität'},{id:'roadmap',l:'⚡ E-Roadmap'}],
+  markt:      [{id:'markt',l:'🌍 Marktanteile'},{id:'region',l:'🗺️ Regionen'},{id:'weltkarte',l:'🌐 Weltkarte'},{id:'absatz',l:'📦 Absatz'},{id:'showrooms',l:'🏪 Showrooms'},{id:'werb',l:'📺 Werbung'},{id:'fahrzeugmarkt',l:'🏷️ Preise'}],
+  wirtschaft: [{id:'fin',l:'💹 Finanzen'},{id:'boerse',l:'📈 Börse'},{id:'bank',l:'🏦 Bank'},{id:'aktien2',l:'💼 Portfolio'},{id:'fusion2',l:'🔀 M&A'},{id:'weltmarkt',l:'🌐 Weltmarkt'}],
+  strategie:  [{id:'rohstoff',l:'⛏️ Rohstoffe'},{id:'lieferkette',l:'⛓️ Lieferkette'},{id:'lieferant2',l:'🤝 Partner'},{id:'politik',l:'🏛️ Politik'},{id:'personal',l:'👷 Personal'},{id:'nachhaltigkeit',l:'🌱 ESG'},{id:'mitbewerber2',l:'⚡ Rivalität'}],
+  spezial:    [{id:'spionage',l:'🕵️ Spionage'},{id:'blackmarket',l:'🕶️ Schwarzm.'},{id:'wetter',l:'🌩️ Krisen'},{id:'kiangriff',l:'🎯 KI-Angriff'},{id:'embargo',l:'🚫 Embargo'},{id:'saison',l:'🍂 Saison'},{id:'racing',l:'🏎️ Racing'},{id:'auto',l:'🤖 Automat.'},{id:'ankuendigungen',l:'📢 Ankündig.'}]
+};
 
-// ═══════════════════════════════════════════════════════════════════════
-//  AUTO EMPIRE — MULTIPLAYER BOOTSTRAP
-//  Ensures proper initialization and company persistence.
-// ═══════════════════════════════════════════════════════════════════════
+window.sv = function(viewId, btn) {
+  document.querySelectorAll('.view').forEach(function(v) { v.classList.remove('on'); });
+  var tgt = document.getElementById('v-' + viewId);
+  if (tgt) tgt.classList.add('on');
+  document.querySelectorAll('.nsb').forEach(function(b) { b.classList.remove('on'); });
+  if (btn) { btn.classList.add('on'); }
+  else { var s = document.getElementById('nsb-' + viewId); if (s) s.classList.add('on'); }
+  try {
+    if (typeof _barCache !== 'undefined') _barCache = {};
+    if (typeof _lastVid  !== 'undefined') _lastVid  = '';
+    if (typeof doTabRender === 'function') doTabRender(viewId);
+  } catch(e) {}
+  var c = document.getElementById('content');
+  if (c) c.scrollTop = 0;
+};
+
+window.setNavCat = function(cat, el) {
+  var map = _NAV[cat]; if (!map) return;
+  document.querySelectorAll('.nc').forEach(function(b) { b.classList.remove('on'); });
+  if (el) el.classList.add('on');
+  var sub = document.getElementById('sub-nav'); if (!sub) return;
+  sub.innerHTML = map.map(function(n) {
+    return '<button class="nsb" id="nsb-'+n.id+'" onclick="sv(\''+n.id+'\',this)">'+n.l+'</button>';
+  }).join('');
+  if (map.length > 0) {
+    var fb = document.getElementById('nsb-'+map[0].id);
+    window.sv(map[0].id, fb);
+  }
+};
+
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  var btn = document.getElementById('theme-toggle-btn');
+  if (btn) btn.innerHTML = t === 'dark' ? '☀️ Light' : '🌙 Dark';
+  try { localStorage.setItem('ae_theme', t); } catch(e) {}
+}
+function toggleTheme() {
+  var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  var next = cur === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  if (typeof notify === 'function') notify(next === 'dark' ? '🌙 Dark Theme' : '☀️ Light Theme', 'ok');
+}
+(function() { try { var t = localStorage.getItem('ae_theme'); if (t) applyTheme(t); } catch(e) {} })();
+
+// ── MULTIPLAYER PERSISTENCE (FIXED) ──
 document.addEventListener('DOMContentLoaded', async () => {
-  // 1. Hide company selector while checking data
   const csEl = document.getElementById('company-select');
   if (csEl) csEl.style.display = 'none';
 
-  // 2. Run engine initialization (VEHS/COMPS are constants in this file)
   if (typeof init === 'function') {
-    try { init(); } catch(e) { console.warn('init error:', e); }
+    try { init(); } catch(e) { console.warn('init:', e); }
   }
 
-  // 3. Fetch user session and game state
   try {
     const res = await fetch('api.php?action=init');
     const text = await res.text();
     let data = null;
     try { 
       data = JSON.parse(text); 
-    } catch(e) {
-      console.error('API Error: Server returned non-JSON response.', text.substring(0, 500));
+    } catch(e) { 
+      console.error('API Error: Non-JSON response.');
     }
 
     if (!data || data.error) {
-      console.warn('Multplayer: Server error or offline mode.', data ? data.error : '');
       _showCompanySelect(csEl);
       return;
     }
 
-    // 4. Update multiplayer rivals data
     if (data.multiplayer_rivals) {
       window.RIVALS = data.multiplayer_rivals;
     }
 
-    // 5. Determine if we should resume or show selection
-    // We check BOTH the top-level company_id and the one inside user_state.
     const companyId = (data.user_state && data.user_state.companyId) || data.company_id;
 
     if (companyId) {
-      // Restore G state from database
-      if (data.user_state && Object.keys(data.user_state).length > 2) {
+      // ⚠️ FIX: Defensive check for Object.assign
+      if (data.user_state && typeof data.user_state === 'object' && Object.keys(data.user_state).length > 2) {
         try {
           Object.assign(window.G, data.user_state);
-          // Convert serialized fields back to Sets if necessary
           if (Array.isArray(G.ads)) G.ads = new Set(G.ads);
           if (Array.isArray(G.ms))  G.ms  = new Set(G.ms);
         } catch(e) { console.warn('State restore failed:', e); }
       }
       
-      // Ensure company selection screen stays hidden
       if (csEl) { csEl.style.cssText = 'display:none !important'; csEl.classList.add('hide'); }
       
-      // Select the first nav category to start rendering
-      const firstNav = document.querySelector('.nc.on') || document.querySelector('.nc');
-      if (firstNav && typeof setNavCat === 'function') setNavCat('zentrale', firstNav);
+      const fb = document.querySelector('.nc.on') || document.querySelector('.nc');
+      // Critical: use global window.setNavCat if local not found
+      const snc = (typeof setNavCat === 'function') ? setNavCat : window.setNavCat;
+      if (typeof snc === 'function') snc('zentrale', fb);
       
-      // Trigger initial render
-      if (typeof renderAll === 'function') {
-        try { renderAll(); } catch(e) { console.error('Initial render error:', e); }
-      }
-      console.log('✅ Multiplayer: Session resumed for', G.companyName);
+      try { if (typeof renderAll === 'function') renderAll(); } catch(e) {}
       if (typeof notify === 'function') notify('🌐 Willkommen zurück!', 'ok');
     } else {
-      // New user or reset account: Show selection screen
-      console.log('🌐 Multiplayer: Showing company selection.');
       _showCompanySelect(csEl);
     }
 
-    // Handle leaderboard rendering
     if (data.leaderboard && typeof renderLeaderboard === 'function') {
       try { renderLeaderboard(data.leaderboard); } catch(e) {}
     }
 
   } catch(e) {
-    console.warn('Multiplayer Init failed:', e);
+    console.warn('MP Init error:', e);
     _showCompanySelect(csEl);
   }
 
-  // 6. Auto-save routine (every 20 seconds)
   setInterval(() => {
     if (!G.companyId) return;
     const state = JSON.stringify({...G, ads: [...G.ads], ms: [...G.ms]});
-    fetch('api.php?action=save', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: state
-    }).catch(e => console.warn('Auto-save error:', e));
+    fetch('api.php?action=save', { method:'POST', headers:{'Content-Type':'application/json'}, body: state }).catch(() => {});
   }, 20000);
 });
 
 function _showCompanySelect(el) {
-  if (typeof buildCompanySelection === 'function') {
-    try { buildCompanySelection(); } catch(e) { console.error('buildCompanySelection failed:', e); }
-  }
+  if (typeof buildCompanySelection === 'function') buildCompanySelection();
   const csEl = el || document.getElementById('company-select');
-  if (csEl) {
-    csEl.style.cssText = 'display:flex !important;position:fixed !important;inset:0 !important;z-index:99998 !important;overflow-y:auto !important;';
-  }
+  if (csEl) csEl.style.cssText = 'display:flex !important;position:fixed !important;inset:0 !important;z-index:99998 !important;overflow-y:auto !important;';
 }
 
 function renderLeaderboard(entries) {
   const el = document.getElementById('lb-list');
   if (!el || !entries) return;
-  const medals = ['\u{1F947}','\u{1F948}','\u{1F949}'];
-  el.innerHTML = entries.map((p, i) => `
-    <div class="lb-row" style="display:flex;align-items:center;gap:10px;padding:8px 6px;${p.isMe ? 'background:rgba(0,212,255,.05);border-radius:6px;' : ''}border-bottom:1px solid rgba(255,255,255,.04)">
-      <div style="width:26px;text-align:center;font-size:${i<3?14:12}px;font-weight:900;color:${i<3?'var(--go)':'var(--dm)'}">
-        ${i<3 ? medals[i] : '#'+(i+1)}
-      </div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:700;${p.isMe?'color:var(--cy)':''}">${p.isAI ? '🤖 ' : ''}${p.name}</div>
-        <div style="font-size:10px;color:var(--dm)">${p.company || ''}</div>
-      </div>
-      <div style="font-size:13px;font-weight:700;font-family:monospace;color:${p.isMe?'var(--gn)':'var(--t2)'}">
-        €${(p.score||0).toLocaleString('de')}
-      </div>
-    </div>
-  `).join('');
+  const med = ['\ud83e\udd47','\ud83e\udd48','\ud83e\udd49'];
+  el.innerHTML = entries.map((p, i) =>
+    '<div style="display:flex;align-items:center;gap:10px;padding:8px 6px;' + (p.isMe ? 'background:rgba(0,212,255,.05);border-radius:6px;' : '') + 'border-bottom:1px solid rgba(255,255,255,.04)">' +
+    '<div style="width:26px;text-align:center;font-weight:900;color:' + (i<3?'var(--go)':'var(--dm)') + '">' + (i<3 ? med[i] : '#'+(i+1)) + '</div>' +
+    '<div style="flex:1"><div style="font-size:13px;font-weight:700;' + (p.isMe?'color:var(--cy)':'') + '">' + (p.isAI?'[KI] ':'') + p.name + '</div></div>' +
+    '<div style="font-size:13px;font-weight:700;font-family:monospace;color:' + (p.isMe?'var(--gn)':'var(--t2)') + '">\u20ac' + (p.score||0).toLocaleString('de') + '</div>' +
+    '</div>'
+  ).join('');
 }
