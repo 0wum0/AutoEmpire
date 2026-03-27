@@ -1,4 +1,4 @@
-﻿// ÔöÇÔöÇ MOBILE VIEWPORT FIX ÔöÇÔöÇ
+// ÔöÇÔöÇ MOBILE VIEWPORT FIX ÔöÇÔöÇ
 // Fix 100vh on mobile browsers where browser chrome overlaps content
 (function fixMobileVH(){
   function setVH(){
@@ -4109,7 +4109,11 @@ console.log('Ô£à Realism Layer loaded ÔÇö Supply Chain ┬À Bottleneck En
 //  Loads user state from server. Falls back to fresh game if offline.
 // ═══════════════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', async () => {
-  // Run base init first (VEHS/COMPS are defined statically above)
+  // Hide company-select IMMEDIATELY while we check the DB
+  const csEl = document.getElementById('company-select');
+  if (csEl) csEl.style.display = 'none';
+
+  // Boot game engine (VEHS/COMPS are embedded statically)
   if (typeof init === 'function') {
     try { init(); } catch(e) { console.warn('init error:', e); }
   }
@@ -4117,88 +4121,72 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const res  = await fetch('api.php?action=init');
     const text = await res.text();
-    let data;
+    let data = null;
     try { data = JSON.parse(text); } catch(e) {
-      console.warn('API nicht JSON — Offline-Modus aktiv');
-      data = null;
+      console.warn('API nicht JSON - Offline');
     }
-
-    if (data && data.error) {
-      console.warn('API Fehler:', data.error);
-      data = null;
-    }
+    if (data && data.error) { console.warn('API:', data.error); data = null; }
 
     if (data) {
-      // Load multiplayer rivals
+      // Load rivals
       if (data.multiplayer_rivals && data.multiplayer_rivals.length) {
         window.RIVALS = data.multiplayer_rivals;
       }
 
-      // If user already selected a company → restore saved state & skip selection
-      if (data.user_state && data.user_state.companyId) {
+      // CORE: Has player selected a company? Check DB-backed companyId
+      const companyId = data.user_state && data.user_state.companyId;
+      if (companyId) {
+        // Restore full state
         try {
-          // Restore G from saved JSON
-          const saved = data.user_state;
-          Object.assign(window.G, saved);
-          // Convert serialized Sets back
-          if (Array.isArray(G.ads))  G.ads  = new Set(G.ads);
-          if (Array.isArray(G.ms))   G.ms   = new Set(G.ms);
-          // Hide company selection permanently
-          const cs = document.getElementById('company-select');
-          if (cs) { cs.style.display = 'none'; cs.classList.add('hide'); }
-          // Show nav
-          const firstBtn = document.querySelector('.nc.on') || document.querySelector('.nc');
-          if (firstBtn && typeof setNavCat === 'function') setNavCat('zentrale', firstBtn);
-          // Render
-          if (typeof renderAll === 'function') renderAll();
-          console.log('✅ Multiplayer: Spielstand geladen für', G.companyName);
-          if (typeof notify === 'function') notify('🌐 Willkommen zurück, ' + (G.companyName || 'Spieler') + '!', 'ok');
-        } catch(e) { console.error('State restore failed:', e); }
+          Object.assign(window.G, data.user_state);
+          if (Array.isArray(G.ads)) G.ads = new Set(G.ads);
+          if (Array.isArray(G.ms))  G.ms  = new Set(G.ms);
+        } catch(e) { console.warn('State merge:', e); }
+        // Hide selection screen permanently
+        if (csEl) { csEl.style.cssText = 'display:none !important'; csEl.classList.add('hide'); }
+        // Show nav
+        const fb = document.querySelector('.nc.on') || document.querySelector('.nc');
+        if (fb && typeof setNavCat === 'function') setNavCat('zentrale', fb);
+        // Render
+        try { if (typeof renderAll === 'function') renderAll(); } catch(e) {}
+        if (typeof notify === 'function') notify('Willkommen zurueck, ' + (G.companyName || 'Spieler') + '!', 'ok');
+        console.log('Spielstand geladen:', G.companyName);
       } else {
-        // New player — show company selection
+        // New player - show company selection
         if (typeof buildCompanySelection === 'function') buildCompanySelection();
-        const cs = document.getElementById('company-select');
-        if (cs) cs.style.cssText = 'display:flex !important;position:fixed !important;inset:0 !important;z-index:99998 !important;overflow-y:auto !important;';
+        if (csEl) csEl.style.cssText = 'display:flex !important;position:fixed !important;inset:0 !important;z-index:99998 !important;overflow-y:auto !important;';
       }
 
-      // Update leaderboard data if present
       if (data.leaderboard && typeof renderLeaderboard === 'function') {
         renderLeaderboard(data.leaderboard);
       }
     } else {
-      // Offline: show company selection normally
+      // Offline fallback
       if (typeof buildCompanySelection === 'function') buildCompanySelection();
+      if (csEl) csEl.style.cssText = 'display:flex !important;position:fixed !important;inset:0 !important;z-index:99998 !important;overflow-y:auto !important;';
     }
 
-    // Auto-save every 20 seconds to server
+    // Auto-save every 20s
     setInterval(() => {
-      if (!G.companyId) return; // no company selected yet
+      if (!G.companyId) return;
       const state = JSON.stringify({...G, ads: [...G.ads], ms: [...G.ms]});
-      fetch('api.php?action=save', { method:'POST', headers:{'Content-Type':'application/json'}, body: state })
-        .catch(() => {});
+      fetch('api.php?action=save', { method:'POST', headers:{'Content-Type':'application/json'}, body: state }).catch(() => {});
     }, 20000);
 
   } catch(e) {
-    console.warn('Multiplayer Init Fehler:', e.message, '— Offline-Modus');
+    console.warn('Multiplayer Init Fehler:', e.message);
     if (typeof buildCompanySelection === 'function') buildCompanySelection();
+    if (csEl) csEl.style.cssText = 'display:flex !important;position:fixed !important;inset:0 !important;z-index:99998 !important;overflow-y:auto !important;';
   }
 });
 
-// Leaderboard render helper (called from multiplayer bootstrap)
 function renderLeaderboard(entries) {
   const el = document.getElementById('lb-list');
   if (!el || !entries) return;
-  const medals = ['🥇','🥈','🥉'];
-  el.innerHTML = entries.map((p, i) => `
-    <div class="lb-row" style="${p.isMe ? 'background:rgba(0,212,255,.05);border-radius:6px;padding:8px 6px;' : 'padding:6px;'}">
-      <div style="width:28px;height:28px;border-radius:50%;background:${i<3?'rgba(255,170,0,.2)':'var(--bg3)'};color:${i<3?'var(--go)':'var(--dm)'};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0;">
-        ${i<3 ? medals[i] : i+1}
-      </div>
-      <div style="flex:1;padding-left:10px;">
-        <div style="font-size:13px;font-weight:700;${p.isMe?'color:var(--cy)':''}">${p.isMe ? '⭐ ' : ''}${p.name}</div>
-        <div style="font-size:10px;color:var(--dm)">${p.company || ''}</div>
-      </div>
-      <div style="font-size:13px;font-weight:700;font-family:monospace;color:${p.isMe?'var(--gn)':'var(--t2)'}">€${p.score ? p.score.toLocaleString('de') : 0}</div>
-    </div>
-  `).join('');
+  const medals = [String.fromCodePoint(0x1F947), String.fromCodePoint(0x1F948), String.fromCodePoint(0x1F949)];
+  el.innerHTML = entries.map((p, i) => '<div style="display:flex;align-items:center;gap:10px;padding:8px 6px;' + (p.isMe ? 'background:rgba(0,212,255,.05);border-radius:6px;' : '') + 'border-bottom:1px solid rgba(255,255,255,.04)">'
+    + '<div style="width:26px;text-align:center;font-size:' + (i<3?14:12) + 'px;font-weight:900;color:' + (i<3?'var(--go)':'var(--dm)') + '">' + (i<3 ? medals[i] : '#'+(i+1)) + '</div>'
+    + '<div style="flex:1"><div style="font-size:13px;font-weight:700;' + (p.isMe?'color:var(--cy)':'') + '">' + (p.isAI ? '[KI] ' : '') + p.name + '</div></div>'
+    + '<div style="font-size:13px;font-weight:700;font-family:monospace;color:' + (p.isMe?'var(--gn)':'var(--t2)') + '">' + String.fromCodePoint(0x20AC) + (p.score||0).toLocaleString('de') + '</div>'
+    + '</div>').join('');
 }

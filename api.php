@@ -18,12 +18,19 @@ if ($action === 'init') {
     $stmt->execute([$uid]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
+    // Always decode saved state if present
     $user_state = null;
     if ($user['json_state']) {
         $user_state = json_decode($user['json_state'], true);
-        // Ensure companyId is always in state (for persistence check)
-        if ($user['company_id'] && !isset($user_state['companyId'])) {
-            $user_state['companyId'] = $user['company_id'];
+    }
+    // CRITICAL: inject company_id into state if missing (e.g. first save not yet written)
+    $company_id = $user['company_id'] ?? null;
+    if ($company_id) {
+        if ($user_state === null) {
+            // Company was selected but state not yet saved — create minimal state
+            $user_state = ['companyId' => $company_id];
+        } elseif (empty($user_state['companyId'])) {
+            $user_state['companyId'] = $company_id;
         }
     }
 
