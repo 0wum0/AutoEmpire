@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>⚡ Auto Empire - Login</title>
+    <link rel="stylesheet" href="game.css">
+</head>
+<body style="display:flex; justify-content:center; align-items:center; height:100vh;">
+    <div class="glass" style="width: 350px; padding: 30px;">
+        <h1 style="color:var(--cy); font-size:20px; text-align:center; margin-bottom:20px;">⚡ Auto Empire Multiplayer</h1>
+        {% if error %}
+            <div class="ev-alert crisis">{{ error }}</div>
+        {% endif %}
+        
+        <form method="POST" style="margin-bottom:20px;">
+            <div class="sh">LOGIN</div>
+            <input type="text" name="username" placeholder="Username" style="width:100%; padding:10px; margin-bottom:10px; background:rgba(0,0,0,0.5); border:1px solid var(--bdr); color:white; border-radius:5px;" required>
+            <input type="password" name="password" placeholder="Passwort" style="width:100%; padding:10px; margin-bottom:15px; background:rgba(0,0,0,0.5); border:1px solid var(--bdr); color:white; border-radius:5px;" required>
+            <button type="submit" name="login" class="btn cy-b">Einloggen</button>
+        </form>
+        
+        <form method="POST">
+            <div class="sh">REGISTRIEREN</div>
+            <input type="text" name="username" placeholder="Neuer Username" style="width:100%; padding:10px; margin-bottom:10px; background:rgba(0,0,0,0.5); border:1px solid var(--bdr); color:white; border-radius:5px;" required>
+            <input type="text" name="company" placeholder="Konzern Name" style="width:100%; padding:10px; margin-bottom:10px; background:rgba(0,0,0,0.5); border:1px solid var(--bdr); color:white; border-radius:5px;" required>
+            <input type="password" name="password" placeholder="Passwort" style="width:100%; padding:10px; margin-bottom:15px; background:rgba(0,0,0,0.5); border:1px solid var(--bdr); color:white; border-radius:5px;" required>
+            <button type="submit" name="register" class="btn go-b">Neuen Konzern gründen</button>
+        </form>
+    </div>
+</body>
+</html>

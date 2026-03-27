@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>⚡ Auto Empire - Multiplayer Installer</title>
+    <link rel="stylesheet" href="game.css">
+</head>
+<body style="display:flex; justify-content:center; align-items:center; height:100vh;">
+    <div class="glass" style="width: 400px; padding: 30px;">
+        <h1 style="color:var(--cy); font-size:20px; text-align:center; margin-bottom:20px;">⚡ Auto Empire Setup ⚡</h1>
+        {% if error %}
+            <div class="ev-alert crisis">{{ error }}</div>
+        {% endif %}
+        <form method="POST">
+            <label style="color:var(--t2); font-size:11px;">MySQL Host</label>
+            <input type="text" name="db_host" value="localhost" style="width:100%; padding:10px; margin-bottom:15px; background:rgba(0,0,0,0.5); border:1px solid var(--bdr); color:white; border-radius:5px;">
+            
+            <label style="color:var(--t2); font-size:11px;">Datenbank Name</label>
+            <input type="text" name="db_name" value="autoempire" style="width:100%; padding:10px; margin-bottom:15px; background:rgba(0,0,0,0.5); border:1px solid var(--bdr); color:white; border-radius:5px;">
+            
+            <label style="color:var(--t2); font-size:11px;">MySQL User</label>
+            <input type="text" name="db_user" value="root" style="width:100%; padding:10px; margin-bottom:15px; background:rgba(0,0,0,0.5); border:1px solid var(--bdr); color:white; border-radius:5px;">
+            
+            <label style="color:var(--t2); font-size:11px;">MySQL Passwort</label>
+            <input type="password" name="db_pass" style="width:100%; padding:10px; margin-bottom:25px; background:rgba(0,0,0,0.5); border:1px solid var(--bdr); color:white; border-radius:5px;">
+            
+            <button type="submit" class="btn cy-b">Spiel Installieren & Datenbank aufbauen</button>
+        </form>
+    </div>
+</body>
+</html>

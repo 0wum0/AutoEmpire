@@ -1,0 +1,7 @@
+{
+    "name": "autoempire/multiplayer",
+    "description": "Multiplayer Auto Empire Browser Game",
+    "require": {
+        "twig/twig": "^3.0"
+    }
+}
