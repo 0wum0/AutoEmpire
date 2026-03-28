@@ -981,9 +981,14 @@ body{background:#060e18;color:#c8d8e8;font-family:'Segoe UI',system-ui,sans-seri
 .nav-item{display:block;padding:10px 20px;color:#6a8090;font-size:13px;text-decoration:none;transition:all .2s;cursor:pointer;border:none;background:none;width:100%;text-align:left}
 .nav-item:hover,.nav-item.active{color:#00d4ff;background:rgba(0,212,255,.06)}
 .nav-item span{margin-right:8px}
-.main{margin-left:220px;padding:30px}
-.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
-.topbar h1{font-size:20px;font-weight:900;color:#fff}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:10000;opacity:0;transition:opacity .3s}
+.modal-overlay.active{display:flex;opacity:1}
+.modal{background:#0a121e;border:1px solid rgba(0,212,255,.2);border-radius:20px;padding:40px;width:100%;max-width:400px;text-align:center;box-shadow:0 30px 60px rgba(0,0,0,.6);transform:scale(0.8);transition:transform .3s cubic-bezier(0.175, 0.885, 0.32, 1.275)}
+.modal-overlay.active .modal{transform:scale(1)}
+.modal-icon{width:80px;height:80px;background:rgba(0,212,255,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:40px;color:#00d4ff}
+.modal h3{font-size:20px;color:#fff;margin-bottom:12px}
+.modal p{color:#6a8090;font-size:14px;line-height:1.6;margin-bottom:30px}
+.modal .btn{display:inline-block;padding:12px 30px;font-weight:600}
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
 .stat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px;text-align:center}
 .stat-n{font-size:28px;font-weight:900;color:#00d4ff}
@@ -1026,25 +1031,49 @@ tr:hover td{background:rgba(255,255,255,.02)}
 <script>
 function show(id, event) {
   console.log('Switching to: ' + id);
+  localStorage.setItem('ae_admin_section', id);
+  
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  
   const target = document.getElementById('sec-' + id);
   if (target) {
     target.classList.add('active');
-  } else {
-    console.warn('Target section not found: sec-' + id);
   }
-  if (event && event.currentTarget) {
-    event.currentTarget.classList.add('active');
-  }
+  
+  // Find and activate sidebar button
+  const buttons = document.querySelectorAll('.nav-item');
+  buttons.forEach(btn => {
+      if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes("'"+id+"'")) {
+          btn.classList.add('active');
+      }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const lastSec = localStorage.getItem('ae_admin_section') || 'overview';
+    show(lastSec);
+});
+
+function closeModal() {
+    document.getElementById('success-modal').classList.remove('active');
 }
 </script>
 </head>
 <body>
 
+<div class="modal-overlay" id="success-modal">
+    <div class="modal">
+        <div class="modal-icon">✅</div>
+        <h3>Operation erfolgreich</h3>
+        <p id="modal-msg"></p>
+        <button class="btn btn-primary" onclick="closeModal()">Verstanden</button>
+    </div>
+</div>
+
 <div class="sidebar">
   <div class="logo">AUTO⚡EMPIRE<small>ADMIN PANEL</small></div>
-  <button class="nav-item active" onclick="show('overview', event)"><span>📊</span> Übersicht</button>
+  <button class="nav-item" onclick="show('overview', event)"><span>📊</span> Übersicht</button>
   <button class="nav-item" onclick="show('events', event)"><span>🌍</span> Welt-Ereignisse</button>
   <button class="nav-item" onclick="show('economy', event)"><span>📈</span> Wirtschaft & Märkte</button>
   <button class="nav-item" onclick="show('players', event)"><span>👥</span> Spieler-Verwaltung</button>
@@ -1066,7 +1095,14 @@ function show(id, event) {
     <a href="index.php" style="color:#4a6880;text-decoration:none;font-size:13px">← Zum Spiel</a>
   </div>
 
-  <?php if ($msg): ?><div class="alert alert-ok"><?= htmlspecialchars($msg) ?></div><?php endif; ?>
+  <?php if ($msg): ?>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('modal-msg').innerText = <?= json_encode($msg) ?>;
+        document.getElementById('success-modal').classList.add('active');
+    });
+  </script>
+  <?php endif; ?>
   <?php if ($err): ?><div class="alert alert-err"><?= htmlspecialchars($err) ?></div><?php endif; ?>
 
   <!-- Inspect logic already handled at top -->
@@ -1177,7 +1213,7 @@ function show(id, event) {
   <?php endif; ?>
 
   <!-- OVERVIEW -->
-  <div class="section active" id="sec-overview">
+  <div class="section" id="sec-overview">
     <div class="stats-row">
       <div class="stat"><div class="stat-n"><?= count($players) ?></div><div class="stat-l">Spieler gesamt</div></div>
       <div class="stat"><div class="stat-n"><?= $real_count ?></div><div class="stat-l">Echte Spieler</div></div>
