@@ -33,6 +33,7 @@ window.setTxt = function(id, val, col) {
 
 const SAVE_KEY = 'ae_v8_save';
 
+window.G = null; // will be set after init
 const G = {
   money:500000,rev:0,cost:0,prod:0,
   rep:50,share:0,tech:1,q:1,y:1,day:0,tc:0,rdb:.1,brand:50,
@@ -2962,6 +2963,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (typeof init === 'function') {
     try { init(); } catch(e) { console.warn('init:', e); }
   }
+  window.G = G; // expose globally for state restore
 
   try {
     const res = await fetch('api.php?action=init');
@@ -2988,7 +2990,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // ⚠️ FIX: Defensive check for Object.assign
       if (data.user_state && typeof data.user_state === 'object' && Object.keys(data.user_state).length > 2) {
         try {
-          Object.assign(window.G, data.user_state);
+          Object.assign(G, data.user_state);
           if (Array.isArray(G.ads)) G.ads = new Set(G.ads);
           if (Array.isArray(G.ms))  G.ms  = new Set(G.ms);
         } catch(e) { console.warn('State restore failed:', e); }
