@@ -18,8 +18,16 @@ $pdo = getPDO();
 $msg = '';
 $err = '';
 
-// ── Actions ───────────────────────────────────────────────────────────────────
+// ── Actions & Data ───────────────────────────────────────────────────────────
 $act = $_POST['action'] ?? '';
+
+// Load core data early for actions that need it
+$players = $pdo->query("SELECT id, username, company_name, company_color, money, market_share, is_ai, ai_strategy, last_update, is_banned, reputation, stock_price FROM ae_users ORDER BY money DESC")->fetchAll(PDO::FETCH_ASSOC);
+$inspect_id = (int)($_GET['inspect'] ?? 0);
+$inspect_data = null;
+if ($inspect_id > 0) {
+    foreach($players as $p) { if((int)$p['id'] === $inspect_id) { $inspect_data = $p; break; } }
+}
 
 // Add AI player
 if ($act === 'add_ai') {
@@ -79,8 +87,19 @@ if ($act === 'delete_ai') {
         $stmt = $pdo->prepare("DELETE FROM ae_users WHERE id=? AND is_ai=1");
         $stmt->execute([$del_id]);
         $msg = "✅ KI-Spieler #$del_id gelöscht.";
+        // Refresh players list
+        $players = $pdo->query("SELECT id, username, company_name, company_color, money, market_share, is_ai, ai_strategy, last_update, is_banned, reputation, stock_price FROM ae_users ORDER BY money DESC")->fetchAll(PDO::FETCH_ASSOC);
     } else {
         $err = "Ungültige ID.";
+    }
+}
+
+// Reset player progress
+if ($act === 'reset_player') {
+    $rid = (int)($_POST['reset_id'] ?? 0);
+    if ($rid > 1) {
+        $pdo->prepare("UPDATE ae_users SET money=500000, market_share=0, reputation=50, json_state=NULL WHERE id=?")->execute([$rid]);
+        $msg = "✅ Spieler #$rid wurde vollständig zurückgesetzt.";
     }
 }
 
@@ -539,9 +558,10 @@ if ($act === 'corruption_scan') {
 
 // 51. Admin Audit Log (Entry)
 function log_admin_action($pdo, $uid, $action, $details) {
+    if (!$uid) return;
     try { $pdo->prepare("INSERT INTO ae_admin_logs (admin_id, action, details) VALUES (?,?,?)")->execute([$uid, $action, $details]); } catch(Exception $e){}
 }
-log_admin_action($pdo, $uid, $act, json_encode($_POST));
+log_admin_action($pdo, $_SESSION['user_id'] ?? 1, $act, json_encode($_POST));
 
 // 52. Database Table View (Placeholder for UI)
 if ($act === 'db_health') {
@@ -871,11 +891,10 @@ if ($act === 'clear_perf_logs') {
     $msg = "📈 System-Logs bereinigt.";
 }
 
-// Load data
-$players = $pdo->query("SELECT id, username, company_name, company_color, money, market_share, is_ai, ai_strategy, last_update, is_banned, reputation, stock_price FROM ae_users ORDER BY money DESC")->fetchAll(PDO::FETCH_ASSOC);
-$global_msg = $pdo->query("SELECT val FROM ae_global WHERE id=1")->fetchColumn() ?: '';
-$real_count = count(array_filter($players, fn($p) => !$p['is_ai']));
-$ai_count   = count(array_filter($players, fn($p) =>  $p['is_ai']));
+// Refresh stats for display
+$global_msg  = $pdo->query("SELECT val FROM ae_global WHERE id=1")->fetchColumn() ?: '';
+$real_count  = count(array_filter($players, fn($p) => !$p['is_ai']));
+$ai_count    = count(array_filter($players, fn($p) =>  $p['is_ai']));
 $total_money = array_sum(array_column($players, 'money'));
 ?>
 <!DOCTYPE html>
@@ -974,15 +993,7 @@ function show(id, event) {
   <?php if ($msg): ?><div class="alert alert-ok"><?= htmlspecialchars($msg) ?></div><?php endif; ?>
   <?php if ($err): ?><div class="alert alert-err"><?= htmlspecialchars($err) ?></div><?php endif; ?>
 
-  <?php
-  $inspect_id = (int)($_GET['inspect'] ?? 0);
-  $inspect_data = null;
-  if ($inspect_id > 0) {
-      $stmt = $pdo->prepare("SELECT * FROM ae_users WHERE id=?");
-      $stmt->execute([$inspect_id]);
-      $inspect_data = $stmt->fetch(PDO::FETCH_ASSOC);
-  }
-  ?>
+  <!-- Inspect logic already handled at top -->
 
   <?php if ($inspect_data): ?>
   <div class="card" style="border-color:#a855f7;background:rgba(168,85,247,0.03)">
@@ -1198,8 +1209,9 @@ function show(id, event) {
             13 => ['name'=>'Ölpreis', 'icon'=>'🛢️'],
             14 => ['name'=>'Logistikkosten', 'icon'=>'🚢'],
           ];
-          foreach($indices as $id => $idx):
-            $v = $pdo->query("SELECT val FROM ae_global WHERE id=$id")->fetchColumn() ?: 1.0;
+          foreach($indices as $mid => $idx):
+            $res = $pdo->query("SELECT val FROM ae_global WHERE id=$mid");
+            $v = ($res) ? ($res->fetchColumn() ?: 1.0) : 1.0;
         ?>
         <div class="stat" style="text-align:left">
           <label style="font-size:11px;color:#4a6880"><?= $idx['icon'] ?> <?= $idx['name'] ?></label>
@@ -1298,7 +1310,10 @@ function show(id, event) {
   <div class="section" id="sec-audit">
     <div class="card">
         <h2>📜 Admin Audit History</h2>
-        <?php $logs = $pdo->query("SELECT * FROM ae_admin_logs ORDER BY created_at DESC LIMIT 50")->fetchAll(PDO::FETCH_ASSOC); ?>
+        <?php 
+          $res = $pdo->query("SELECT * FROM ae_admin_logs ORDER BY created_at DESC LIMIT 50");
+          $logs = ($res) ? $res->fetchAll(PDO::FETCH_ASSOC) : []; 
+        ?>
         <table style="font-size:11px">
             <thead><tr><th>Zeitpunkt</th><th>Admin</th><th>Aktion</th><th>Details</th></tr></thead>
             <tbody>
@@ -1483,10 +1498,13 @@ function show(id, event) {
     </div>
   </div>
 
-  <!-- OVERVIEW ADDITIONAL -->
-  <div class="card">
+  <!-- OVERVIEW ADDITIONAL (MoTD) -->
+  <div class="card" style="margin-top:20px; border-color: rgba(0,212,255,0.2)">
     <h2>📜 System-Ankündigung (MoTD)</h2>
-    <?php $motd = $pdo->query("SELECT val FROM ae_global WHERE id=28")->fetchColumn() ?: 'Willkommen bei Auto Empire!'; ?>
+    <?php 
+      $res = $pdo->query("SELECT val FROM ae_global WHERE id=28");
+      $motd = ($res) ? ($res->fetchColumn() ?: 'Willkommen bei Auto Empire!') : 'Willkommen!';
+    ?>
     <form method="POST" style="display:flex;gap:10px">
         <input type="hidden" name="action" value="set_motd">
         <input type="text" name="motd" value="<?= htmlspecialchars($motd) ?>" style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:10px;color:#fff">
