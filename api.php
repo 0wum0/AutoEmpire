@@ -11,6 +11,20 @@ $pdo = getPDO();
 $uid    = (int)$_SESSION['user_id'];
 $action = $_GET['action'] ?? '';
 
+// Check Banned Status
+$is_banned = $pdo->query("SELECT is_banned FROM ae_users WHERE id=$uid")->fetchColumn() ?: 0;
+if ($is_banned && $uid > 1) { echo json_encode(['error' => 'Account banned']); exit; }
+
+// Check Maintenance Mode
+$maint = $pdo->query("SELECT val FROM ae_global WHERE id=2")->fetchColumn() ?: 0;
+if ($maint && $uid > 1) { 
+    $m_txt = $pdo->query("SELECT val FROM ae_global WHERE id=3")->fetchColumn() ?: 'Server Maintenance. Please try again later.';
+    echo json_encode(['error' => 'Maintenance', 'message' => $m_txt]); 
+    exit; 
+}
+
+$global_msg = $pdo->query("SELECT val FROM ae_global WHERE id=1")->fetchColumn() ?: '';
+
 // ── INIT ─────────────────────────────────────────────────────────────────────
 if ($action === 'init') {
 
@@ -85,6 +99,7 @@ if ($action === 'init') {
     echo json_encode([
         'status'             => 'ok',
         'uid'                => $uid,
+        'global_msg'         => $global_msg,
         'user_state'         => $user_state,
         'company_id'         => $company_id,   // also top-level for easy frontend check
         'multiplayer_rivals' => $rivals,
