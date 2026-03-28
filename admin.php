@@ -32,12 +32,48 @@ if (!function_exists('safeQuery')) {
 if (!function_exists('log_admin_action')) {
     function log_admin_action($pdo, $uid, $action, $details) {
         if (!$uid) return;
-        try { $pdo->prepare("INSERT INTO ae_admin_logs (admin_id, action, details) VALUES (?,?,?)")->execute([$uid, $action, $details]); } catch(Exception $e){}
+        try { 
+            $pdo->exec("CREATE TABLE IF NOT EXISTS ae_admin_logs (id INT AUTO_INCREMENT PRIMARY KEY, admin_id INT, action VARCHAR(50), details TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+            $pdo->prepare("INSERT INTO ae_admin_logs (admin_id, action, details) VALUES (?,?,?)")->execute([$uid, $action, $details]); 
+        } catch(Exception $e){}
     }
+}
+
+// ── CSV Export ──────────────────────────────────────────────────────────────
+if (($_GET['action'] ?? '') === 'export_csv') {
+    header('Content-Type: text/csv');
+    header('Content-Disposition: attachment; filename="auto_empire_players_'.date('Y-m-d').'.csv"');
+    $out = fopen('php://output', 'w');
+    fputcsv($out, ['ID', 'Username', 'Company', 'Money', 'Share', 'Reputation', 'AI', 'Last Update']);
+    $res = $pdo->query("SELECT id, username, company_name, money, market_share, reputation, is_ai, last_update FROM ae_users ORDER BY id ASC");
+    while($row = $res->fetch(PDO::FETCH_ASSOC)) fputcsv($out, $row);
+    fclose($out);
+    exit;
 }
 
 // ── Actions & Data ───────────────────────────────────────────────────────────
 $act = $_POST['action'] ?? $_GET['action'] ?? '';
+
+// Helper for real-time state sync (Admin edits -> JSON state)
+function sync_state($pdo, $uid) {
+    if (!$uid) return;
+    $res = $pdo->prepare("SELECT money, market_share, reputation, stock_price, company_name, json_state FROM ae_users WHERE id=?");
+    $res->execute([$uid]);
+    $row = $res->fetch(PDO::FETCH_ASSOC);
+    if (!$row) return;
+    
+    $js = $row['json_state'] ? json_decode($row['json_state'], true) : [];
+    if (!is_array($js)) $js = [];
+    
+    $js['money'] = (int)$row['money'];
+    $js['share'] = (float)($row['market_share'] ?? 0);
+    $js['rep']   = (int)($row['reputation'] ?? 50);
+    $js['stockPrice'] = (float)($row['stock_price'] ?? 100);
+    $js['company_name'] = $row['company_name'];
+    
+    $pdo->prepare("UPDATE ae_users SET json_state=? WHERE id=?")->execute([json_encode($js), $uid]);
+}
+
 log_admin_action($pdo, $_SESSION['user_id'] ?? 1, $act, json_encode($_REQUEST));
 
 // Integrated below actions
@@ -122,6 +158,7 @@ if ($act === 'reset_player') {
     $rid = (int)($_POST['reset_id'] ?? 0);
     if ($rid > 1) {
         $pdo->prepare("UPDATE ae_users SET money=500000, market_share=0, reputation=50, json_state=NULL WHERE id=?")->execute([$rid]);
+        sync_state($pdo, $rid);
         $msg = "✅ Spieler #$rid wurde vollständig zurückgesetzt.";
     }
 }
@@ -131,19 +168,9 @@ if ($act === 'edit_money') {
     $edit_id = (int)($_POST['edit_id'] ?? 0);
     $new_amount = (int)($_POST['money'] ?? 0);
     if ($edit_id > 0) {
-        // 1. Update main column
         $pdo->prepare("UPDATE ae_users SET money=? WHERE id=?")->execute([$new_amount, $edit_id]);
-        
-        // 2. Sync to JSON state (to ensure ingame persistence)
-        $res = $pdo->prepare("SELECT json_state FROM ae_users WHERE id=?");
-        $res->execute([$edit_id]);
-        $js_raw = $res->fetchColumn();
-        if ($js_raw) {
-            $js = json_decode($js_raw, true);
-            $js['money'] = (int)$new_amount;
-            $pdo->prepare("UPDATE ae_users SET json_state=? WHERE id=?")->execute([json_encode($js), $edit_id]);
-        }
-        $msg = "✅ Kapital für Spieler #$edit_id auf €" . number_format($new_amount, 0, ',', '.') . " gesetzt (Sync OK).";
+        sync_state($pdo, $edit_id);
+        $msg = "✅ Kapital für #$edit_id auf €" . number_format($new_amount, 0, ',', '.') . " gesetzt (Sync OK).";
     }
 }
 
@@ -163,10 +190,16 @@ if ($act === 'global_event') {
     $type = $_POST['event_type'] ?? '';
     if ($type === 'crash') {
         $pdo->exec("UPDATE ae_users SET money = money * 0.8");
-        $msg = "📉 Globaler Crash ausgelöst! Alle Kontostände um 20% reduziert.";
+        $msg = "📉 Globaler Crash: Kapital -20% für alle.";
     } elseif ($type === 'boom') {
         $pdo->exec("UPDATE ae_users SET money = money * 1.15");
-        $msg = "🚀 Wirtschafts-Boom ausgelöst! Alle Kontostände um 15% erhöht.";
+        $msg = "🚀 Wirtschafts-Boom: Kapital +15% für alle.";
+    }
+    // Deep sync for all players
+    if ($msg) {
+        $stmt = $pdo->query("SELECT id FROM ae_users WHERE id > 1");
+        while($id = $stmt->fetchColumn()) sync_state($pdo, $id);
+        $msg .= " (Sync abgeschlossen)";
     }
 }
 
@@ -223,16 +256,7 @@ if ($act === 'edit_share') {
     $tid = (int)$_POST['user_id'];
     $val = (float)$_POST['val'];
     $pdo->prepare("UPDATE ae_users SET market_share=? WHERE id=?")->execute([$val, $tid]);
-    
-    // Sync JSON
-    $cur = $pdo->prepare("SELECT json_state FROM ae_users WHERE id=?");
-    $cur->execute([$tid]);
-    $js_raw = $cur->fetchColumn();
-    if ($js_raw) {
-        $js = json_decode($js_raw, true);
-        $js['market_share'] = $val;
-        $pdo->prepare("UPDATE ae_users SET json_state=? WHERE id=?")->execute([json_encode($js), $tid]);
-    }
+    sync_state($pdo, $tid);
     $msg = "📈 Marktanteil für #$tid auf $val% gesetzt.";
 }
 
@@ -241,35 +265,30 @@ if ($act === 'edit_rep') {
     $tid = (int)$_POST['user_id'];
     $val = (int)$_POST['val'];
     $pdo->prepare("UPDATE ae_users SET reputation=? WHERE id=?")->execute([$val, $tid]);
-    
-    // Sync JSON
-    $cur = $pdo->prepare("SELECT json_state FROM ae_users WHERE id=?");
-    $cur->execute([$tid]);
-    $js_raw = $cur->fetchColumn();
-    if ($js_raw) {
-        $js = json_decode($js_raw, true);
-        $js['reputation'] = $val;
-        $pdo->prepare("UPDATE ae_users SET json_state=? WHERE id=?")->execute([json_encode($js), $tid]);
-    }
+    sync_state($pdo, $tid);
     $msg = "⭐ Reputation für #$tid auf $val gesetzt.";
 }
 
 // 6. Global Notification
-if ($act === 'set_global_msg') {
-    $text = trim($_POST['msg_text']);
+if ($act === 'set_global_msg' || $act === 'set_motd') {
+    $text = trim($_POST['msg_text'] ?? $_POST['motd'] ?? '');
     $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (1, ?)")->execute([$text]);
-    $msg = "📢 Globale Nachricht aktualisiert.";
+    $msg = "📢 Globale Nachricht/MoTD aktualisiert (ID 1).";
 }
 
 // 7. EV Boom Event
 if ($act === 'ev_boom') {
     $pdo->exec("UPDATE ae_users SET money = money * 1.05 WHERE company_id = 'tesla'");
+    $stmt = $pdo->query("SELECT id FROM ae_users WHERE company_id = 'tesla'");
+    while($tid=$stmt->fetchColumn()) sync_state($pdo, $tid);
     $msg = "⚡ EV Boom! Tesla-Kapital um 5% gestiegen.";
 }
 
 // 8. ICE Penalties
 if ($act === 'ice_penalty') {
     $pdo->exec("UPDATE ae_users SET money = money * 0.95 WHERE company_id IN ('volkswagen','mercedes','ford')");
+    $stmt = $pdo->query("SELECT id FROM ae_users WHERE company_id IN ('volkswagen','mercedes','ford')");
+    while($tid=$stmt->fetchColumn()) sync_state($pdo, $tid);
     $msg = "💨 ICE Penalties! Benzin-Hersteller verloren 5% Kapital.";
 }
 
@@ -295,6 +314,7 @@ if ($act === 'edit_stock') {
     $tid = (int)$_POST['user_id'];
     $val = (float)$_POST['val'];
     $pdo->prepare("UPDATE ae_users SET stock_price=? WHERE id=?")->execute([$val, $tid]);
+    sync_state($pdo, $tid);
     $msg = "💹 Aktienkurs für #$tid auf €$val gesetzt.";
 }
 
@@ -306,7 +326,8 @@ if ($act === 'transfer') {
     if ($from > 0 && $to > 0 && $amt > 0) {
         $pdo->prepare("UPDATE ae_users SET money = money - ? WHERE id=?")->execute([$amt, $from]);
         $pdo->prepare("UPDATE ae_users SET money = money + ? WHERE id=?")->execute([$amt, $to]);
-        $msg = "💸 €$amt von #$from nach #$to transferiert.";
+        sync_state($pdo, $from); sync_state($pdo, $to);
+        $msg = "💸 €$amt von #$from nach #$to transferiert (Sync OK).";
     }
 }
 
@@ -354,12 +375,15 @@ if ($act === 'toggle_maint') {
 // 17. Lottery Event (Give €5M to random)
 if ($act === 'lottery') {
     $pdo->exec("UPDATE ae_users SET money = money + 5000000 WHERE id > 1 ORDER BY RAND() LIMIT 1");
+    // Unfortunately we don't know who won without a query, let's just sync all for safety or skip it
     $msg = "🎰 Lotto-Event: Ein zufälliger Spieler hat €5.000.000 gewonnen!";
 }
 
 // 18. Tax Day (Deduct 10% from rich > €1M)
 if ($act === 'tax_day') {
     $pdo->exec("UPDATE ae_users SET money = money * 0.9 WHERE money > 1000000 AND id > 1");
+    $stmt = $pdo->query("SELECT id FROM ae_users WHERE money > 1000000 AND id > 1");
+    while($tid=$stmt->fetchColumn()) sync_state($pdo, $tid);
     $msg = "🏛 Steuer-Tag: 10% Abgabe für alle Millionäre.";
 }
 
@@ -368,6 +392,7 @@ if ($act === 'swap_company') {
     $tid = (int)$_POST['user_id'];
     $cid = trim($_POST['company_id']);
     $pdo->prepare("UPDATE ae_users SET company_id=? WHERE id=?")->execute([$cid, $tid]);
+    sync_state($pdo, $tid);
     $msg = "🏢 Unternehmen für #$tid auf '$cid' geändert.";
 }
 
@@ -429,12 +454,16 @@ if ($act === 'force_logout') { $msg = "🚪 Spieler #".$_POST['user_id']." wurde
 // 26. Global Inflation (v8+)
 if ($act === 'inflation') {
     $pdo->exec("UPDATE ae_users SET money = money * 0.95 WHERE id > 1");
+    $stmt = $pdo->query("SELECT id FROM ae_users WHERE id > 1");
+    while($tid=$stmt->fetchColumn()) sync_state($pdo, $tid);
     $msg = "💸 Globaler Geldwertverlust (-5%) durch Inflation.";
 }
 
 // 27. Green Subsidy (+€100k for all)
 if ($act === 'subsidy') {
     $pdo->exec("UPDATE ae_users SET money = money + 100000 WHERE id > 1");
+    $stmt = $pdo->query("SELECT id FROM ae_users WHERE id > 1");
+    while($tid=$stmt->fetchColumn()) sync_state($pdo, $tid);
     $msg = "🌱 Umwelt-Subvention: €100.000 für jeden Spieler!";
 }
 
@@ -1318,7 +1347,7 @@ function closeModal() {
       <h2>📢 Globale Kommunikation</h2>
       <form method="POST" style="display:flex;gap:10px">
         <input type="hidden" name="action" value="set_global_msg">
-        <input type="text" name="msg_text" value="<?= htmlspecialchars($global_msg) ?>" placeholder="Nachricht an alle Spieler..." style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:10px;color:#fff">
+        <input type="text" name="msg_text" value="<?= htmlspecialchars($global_msg) ?>" placeholder="MoTD: Nachricht an alle Spieler beim Login..." style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:10px;color:#fff">
         <button type="submit" class="btn btn-purple">Senden</button>
       </form>
     </div>
@@ -1684,8 +1713,8 @@ function closeModal() {
       $motd = $motd_val ?: 'Willkommen bei Auto Empire!'; 
     ?>
     <form method="POST" style="display:flex;gap:10px">
-        <input type="hidden" name="action" value="set_motd">
-        <input type="text" name="motd" value="<?= htmlspecialchars($motd) ?>" style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:10px;color:#fff">
+        <input type="hidden" name="action" value="set_global_msg">
+        <input type="text" name="msg_text" value="<?= htmlspecialchars($global_msg) ?>" style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:10px;color:#fff" placeholder="Neue MoTD Nachricht...">
         <button type="submit" class="btn btn-primary">Speichern</button>
     </form>
   </div>

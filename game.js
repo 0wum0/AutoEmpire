@@ -1160,7 +1160,7 @@ function doTabRender(vid){
     case'lieferkette':if(typeof rLieferkette==='function')rLieferkette();break;
     case'nachhaltigkeit':if(typeof rNachhaltigkeit==='function')rNachhaltigkeit();break;
     case'absatz':if(typeof rAbsatz==='function')rAbsatz();break;
-    case'news':if(typeof rNews==='function')rNews();break;
+    case'news':rNews();break;
     case'aktien2':if(typeof rPortfolio==='function')rPortfolio();break;
     case'ziele':if(typeof rZiele==='function')rZiele();break;
     case'lieferant2':if(typeof rPartner==='function')rPartner();break;
@@ -2107,7 +2107,41 @@ setInterval(() => {
   }
 }, 2000);
 
-console.log('🏎️ AUTO EMPIRE v9 — 25 neue Features geladen!');
+function rNews() {
+  const feed = document.getElementById('news-feed');
+  if(!feed) return;
+  
+  let h = '';
+  // 1. Global Message (MoTD)
+  if(G.globalMsg) {
+    h += `<div class="gcard-gold" style="border-radius:12px;margin-bottom:16px;border:1px solid rgba(255,170,0,0.3);background:linear-gradient(135deg, rgba(255,170,0,0.1), rgba(0,0,0,0.2));">
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--go);margin-bottom:7px;display:flex;align-items:center;gap:6px;">
+              <span style="animation:pulse 2s infinite">📢</span> SYSTEM-ANKÜNDIGUNG
+            </div>
+            <div style="font-size:15px;font-weight:800;color:#fff;line-height:1.4;">${G.globalMsg}</div>
+          </div>`;
+  }
+  
+  // 2. Automated Market News
+  const autoNews = [];
+  if(G.marketTrend === 'bull') autoNews.push({id:'trend', title:'📈 Bullenmarkt bestätigt', type:'success', text:'Die globalen Märkte zeigen starke Aufwärtstendenzen. Optimale Zeit für Expansion.'});
+  if(G.marketTrend === 'bear') autoNews.push({id:'trend', title:'📉 Bärenmarkt Warnung', type:'danger', text:'Anleger ziehen Kapital ab. Nachfrage sinkt global um ca. 10%.'});
+  if(G.ecoPhase === 'boom') autoNews.push({id:'eco', title:'🚀 Wirtschafts-Boom', type:'success', text:'Die Weltwirtschaft läuft auf Hochtouren. Rekordumsätze in allen Segmenten!'});
+  
+  h += autoNews.map(n => `
+    <div class="glass" style="margin-bottom:10px;border-left:4px solid var(--${n.type==='danger'?'rd':n.type==='success'?'gn':'cy'});padding:12px;">
+      <div style="font-size:12px;font-weight:800;color:var(--t1);">${n.title}</div>
+      <div style="font-size:11px;color:var(--t2);margin-top:4px;line-height:1.4;">${n.text}</div>
+    </div>
+  `).join('');
+  
+  // 3. Fallback
+  if(!h) h = '<div style="color:var(--dm);text-align:center;padding:40px;font-size:12px;background:rgba(255,255,255,0.02);border-radius:12px;border:1px dashed var(--bdr);">Derzeit keine wichtigen Nachrichten.</div>';
+  
+  feed.innerHTML = h;
+}
+
+console.log('🏎️ AUTO EMPIRE v10.1 — News System & Sync Fixes');
 
 // ════════════════════════════════════════════════════════
 //  AUTO EMPIRE v10  —  25 NEUE REALISTISCHE FEATURES
@@ -3004,6 +3038,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const companyId = (data.user_state && data.user_state.companyId) || data.company_id;
 
     if (companyId) {
+      if (data.global_msg) {
+        G.globalMsg = data.global_msg;
+        const lastSeenMsg = localStorage.getItem('ae_last_msg');
+        if (lastSeenMsg !== data.global_msg) {
+           notify('📢 Neue Nachricht vom System!', 'ok');
+           localStorage.setItem('ae_last_msg', data.global_msg);
+        }
+      }
+
       const isStateEmpty = !data.user_state || typeof data.user_state !== 'object' || Object.keys(data.user_state).length <= 2;
       
       if (!isStateEmpty) {

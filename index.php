@@ -6,6 +6,16 @@ if (!file_exists('config.php')) {
     exit;
 }
 require_once 'config.php';
+
+// Check for maintenance mode
+try {
+    $m_pdo = getPDO();
+    $maint = $m_pdo->query("SELECT val FROM ae_global WHERE id=2")->fetchColumn();
+    if ($maint == '1' && (!isset($_SESSION['user_id']) || (int)$_SESSION['user_id'] !== 1)) {
+        die('<!DOCTYPE html><html><body style="background:#060e18;color:#ffaa00;font-family:monospace;padding:40px;text-align:center"><h2>🛠 Wartungsarbeiten</h2><p>Das Spiel wird gerade aktualisiert. Bitte versuche es in wenigen Minuten erneut.</p><p style="color:#4a6880;font-size:10px">Status: Active Maintenance</p></body></html>');
+    }
+} catch(Exception $e) {}
+
 require_once 'vendor/autoload.php';
 
 try {
