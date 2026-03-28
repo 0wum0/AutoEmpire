@@ -1045,6 +1045,15 @@ td{padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.03)}
 .s-pass{background:rgba(100,180,100,.15);color:#88cc88}
 .s-lux {background:rgba(255,170,0,.15);color:#ffaa00}
 .s-bal {background:rgba(0,212,255,.1);color:#00d4ff}
+
+/* MODAL SYSTEMS */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:10000;opacity:0;transition:opacity .3s}
+.modal-overlay.active{display:flex;opacity:1}
+.modal{background:#0a121e;border:1px solid rgba(0,212,255,.2);border-radius:20px;padding:40px;width:100%;max-width:400px;text-align:center;box-shadow:0 30px 60px rgba(0,0,0,.6);transform:scale(0.8);transition:transform .3s cubic-bezier(0.175, 0.885, 0.32, 1.275)}
+.modal-overlay.active .modal{transform:scale(1)}
+.modal-icon{width:80px;height:80px;background:rgba(0,212,255,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:40px;color:#00d4ff}
+.modal h3{font-size:20px;color:#fff;margin-bottom:12px}
+.modal p{color:#6a8090;font-size:14px;line-height:1.6;margin-bottom:30px}
 </style>
 <script>
 function show(id, event) {
