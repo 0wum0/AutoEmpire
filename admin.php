@@ -908,10 +908,14 @@ if ($act === 'assign_legacy') {
     $msg = "⭐ User #$tid hat jetzt Legacy-Status.";
 }
 
-// 101-105. System Metrics & Logs
-if ($act === 'clear_perf_logs') {
-    $pdo->exec("TRUNCATE TABLE ae_admin_logs");
-    $msg = "📈 System-Logs bereinigt.";
+// Refresh all data for final rendering
+$res_players = safeQuery($pdo, "SELECT id, username, company_name, company_color, money, market_share, is_ai, ai_strategy, last_update, is_banned, reputation, stock_price FROM ae_users ORDER BY money DESC");
+$players = ($res_players) ? $res_players->fetchAll(PDO::FETCH_ASSOC) : [];
+
+$inspect_id = (int)($_GET['inspect'] ?? 0);
+$inspect_data = null;
+if ($inspect_id > 0) {
+    foreach($players as $p) { if((int)$p['id'] === $inspect_id) { $inspect_data = $p; break; } }
 }
 
 // Refresh stats for display
