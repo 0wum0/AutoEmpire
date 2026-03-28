@@ -1258,6 +1258,31 @@ function closeModal() {
       <div class="stat"><div class="stat-n" style="color:#00d450;font-size:18px">€<?= number_format($total_money, 0, ',', '.') ?></div><div class="stat-l">System-Kapital</div></div>
     </div>
 
+    <!-- CRONJOB STATUS -->
+    <div class="card" style="border-left: 4px solid #a855f7; background: rgba(168,85,247,0.03)">
+      <h2>🤖 Automatisierung & Globaler World-Tick</h2>
+      <?php 
+         $last_tick = (int)(safeQuery($pdo, "SELECT val FROM ae_global WHERE id=50")->fetchColumn() ?: 0);
+         $diff = ($last_tick > 0) ? time() - $last_tick : 9999;
+         $status_text = ($diff < 360) ? 'AKTIV' : 'WARTEND';
+         $status_color = ($diff < 360) ? '#00ff88' : '#ffaa00';
+      ?>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px">
+          <div>
+              <div style="font-size:13px;color:#fff;margin-bottom:5px">Status: <b style="color:<?= $status_color ?>"><?= $status_text ?></b></div>
+              <div style="font-size:11px;color:#6a8090">Letzter Auto-Tick: <?= ($last_tick > 0) ? date('H:i:s', $last_tick) . " (vor " . $diff . "s)" : "Nie" ?></div>
+              <div style="margin-top:10px; font-size:10px; color:#4a6880; font-family:monospace; background:rgba(0,0,0,0.3); padding:8px; border-radius:6px; border:1px solid rgba(255,255,255,0.05)">
+                # Server-Cronjob (alle 5 Min):<br>
+                */5 * * * * curl -s <?= (isset($_SERVER['HTTPS'])?'https':'http')."://".$_SERVER['HTTP_HOST']."/ae/api.php?action=ai_tick" ?> > /dev/null
+              </div>
+          </div>
+          <form method="POST">
+            <input type="hidden" name="action" value="ai_tick">
+            <button class="btn btn-purple">🌐 World-Tick jetzt erzwingen</button>
+          </form>
+      </div>
+    </div>
+
     <div class="card">
       <h2>⚡ Schnellaktionen</h2>
       <div style="display:flex;gap:10px;flex-wrap:wrap">

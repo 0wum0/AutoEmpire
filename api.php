@@ -11,6 +11,23 @@ $pdo = getPDO();
 $uid    = (int)$_SESSION['user_id'];
 $action = $_GET['action'] ?? '';
 
+function runWorldTick($pdo) {
+    try {
+        $bots = $pdo->query("SELECT id, money, market_share FROM ae_users WHERE is_ai=1")->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($bots as $b) {
+            $inc = rand(40000, 100000);
+            $sh  = round(rand(0, 5) / 10, 2);
+            $pdo->prepare("UPDATE ae_users SET money=money+?, market_share=LEAST(30,market_share+?), last_update=NOW() WHERE id=?")->execute([$inc, $sh, $b['id']]);
+        }
+        $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (50, ?)")->execute([time()]);
+        return true;
+    } catch(Exception $e) { return false; }
+}
+
+// Pseudo-Cron Check (Auto-Tick every 5 min)
+$last = (int)($pdo->query("SELECT val FROM ae_global WHERE id=50")->fetchColumn() ?: 0);
+if (time() - $last > 300 && $action !== 'ai_tick') { runWorldTick($pdo); }
+
 // Check Banned Status
 $is_banned = $pdo->query("SELECT is_banned FROM ae_users WHERE id=$uid")->fetchColumn() ?: 0;
 if ($is_banned && $uid > 1) { echo json_encode(['error' => 'Account banned']); exit; }
@@ -143,6 +160,12 @@ if ($action === 'save') {
         $stmt->execute([$data, $uid]);
     }
     echo json_encode(['status' => 'saved']);
+    exit;
+}
+
+if ($action === 'ai_tick') {
+    $success = runWorldTick($pdo);
+    echo json_encode(['status' => $success ? 'tick_ok' : 'tick_failed', 'timestamp' => time()]);
     exit;
 }
 
