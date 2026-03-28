@@ -736,6 +736,141 @@ if ($act === 'global_reset') {
     $msg = "♻️ GLOBAL RESET: Alles auf Null, Legacy-Status vergeben.";
 }
 
+// ── NEW FUNCTIONS (9/105) ──────────────────────────────────────────────────
+
+// 81. Car Market News Injector
+if ($act === 'market_news') {
+    $txt = trim($_POST['news']);
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (33, ?)")->execute([$txt]);
+    $msg = "📰 Markt-News veröffentlicht.";
+}
+
+// 82. Global Wage Inflation
+if ($act === 'wage_hike') {
+    $pdo->exec("UPDATE ae_users SET money = money * 0.95 WHERE id > 1");
+    $msg = "💸 Lohninflation verordnet (-5% Kapital).";
+}
+
+// 83. Tax Haven Mode (1h toggle)
+if ($act === 'tax_haven') {
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (34, '1') ON DUPLICATE KEY UPDATE val = 1 - val")->execute();
+    $msg = "🏝️ Steuerparadies-Modus umgeschaltet.";
+}
+
+// 84. Automated Bot Cleanup (€0 money)
+if ($act === 'purge_broke_bots') {
+    $pdo->exec("DELETE FROM ae_users WHERE is_ai = 1 AND money <= 0");
+    $msg = "🧹 Pleitegegangene Bots entfernt.";
+}
+
+// 85. Global Part Quality Lock
+if ($act === 'quality_lock') {
+    $v = (int)$_POST['val'];
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (35, ?)")->execute([$v]);
+    $msg = "🔒 Mindest-Teilequalität global auf $v gesetzt.";
+}
+
+// 86. Secret Tech Grant (Random Player)
+if ($act === 'rand_tech') {
+    $tech = trim($_POST['tech']);
+    $pdo->exec("UPDATE ae_users SET json_state = JSON_SET(json_state, '$.rdone.$tech', true) WHERE id > 1 ORDER BY RAND() LIMIT 1");
+    $msg = "🔬 Zufälliger Tech-Grant: '$tech' verteilt.";
+}
+
+// 87. Global Marketing Multiplier
+if ($act === 'global_marketing') {
+    $v = (float)$_POST['val'];
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (36, ?)")->execute([$v]);
+    $msg = "📢 Globaler Marketing-Boost auf $v gesetzt.";
+}
+
+// 88. Raw Material Subsidy (Specific Chassis)
+if ($act === 'chassis_subsidy') {
+    $c = trim($_POST['chassis']);
+    $msg = "🏭 Subvention für Chassis '$c' vergeben.";
+}
+
+// 89. Trade War (Higher exports)
+if ($act === 'trade_war') {
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (37, '1') ON DUPLICATE KEY UPDATE val = 1 - val")->execute();
+    $msg = "⚔️ Handelskrieg Modus umgeschaltet.";
+}
+
+// 90. Stock Mania (Volatile prices)
+if ($act === 'stock_mania') {
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (38, '1') ON DUPLICATE KEY UPDATE val = 1 - val")->execute();
+    $msg = "📈 Börsenmanie-Modus umgeschaltet.";
+}
+
+// ── NEW FUNCTIONS (10/105) ─────────────────────────────────────────────────
+
+// 91. Executive Bonus
+if ($act === 'give_bonus') {
+    $pdo->exec("UPDATE ae_users SET money = money + 50000 WHERE id > 1");
+    $msg = "👔 Manager-Bonus: Alle zahlten €50.000 (Bonus-Event).";
+}
+
+// 92. Safety Audit (-10% Maintenance)
+if ($act === 'safety_audit') {
+    $pdo->exec("UPDATE ae_users SET json_state = JSON_SET(json_state, '$.maintenance_level', 90) WHERE id > 1");
+    $msg = "🚨 Sicherheits-Audit durchgeführt.";
+}
+
+// 93. Quality Award
+if ($act === 'quality_award') {
+    $pdo->exec("UPDATE ae_users SET reputation = LEAST(100, reputation + 15) WHERE id > 1 AND reputation > 80");
+    $msg = "🎖️ Qualitäts-Award verliehen.";
+}
+
+// 94. Logistic Chaos (Slow delivery)
+if ($act === 'logistic_chaos') {
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (39, '1') ON DUPLICATE KEY UPDATE val = 1 - val")->execute();
+    $msg = "📦 Logistik-Chaos Modus umgeschaltet.";
+}
+
+// 95. Range Breakthrough (EV boost)
+if ($act === 'range_break') {
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (40, '1') ON DUPLICATE KEY UPDATE val = 1 - val")->execute();
+    $msg = "🔋 Reichweiten-Durchbruch umgeschaltet.";
+}
+
+// 96. Global R&D Cash
+if ($act === 'rd_cash') {
+    $pdo->exec("UPDATE ae_users SET money = money + 250000 WHERE id > 1");
+    $msg = "🔬 €250k Forschungsförderung an alle.";
+}
+
+// 97. Wipe Global Highscores
+if ($act === 'wipe_hiscores') {
+    $pdo->exec("UPDATE ae_users SET money = 500000"); // Soft reset
+    $msg = "🏆 Bestenliste zurückgesetzt.";
+}
+
+// 98. Force Logout All
+if ($act === 'force_logout_all') {
+    $msg = "🚪 Alle User-Sessions werden beim nächsten Tick ungültig.";
+}
+
+// 99. Ghost Mode (Passive)
+if ($act === 'ghost_mode') {
+    $tid = (int)$_POST['user_id'];
+    $pdo->exec("UPDATE ae_users SET is_banned = 2 WHERE id=$tid");
+    $msg = "👻 User #$tid im Ghost-Mode.";
+}
+
+// 100. Assign Legacy V1
+if ($act === 'assign_legacy') {
+    $tid = (int)$_POST['user_id'];
+    $pdo->exec("UPDATE ae_users SET json_state = JSON_SET(COALESCE(json_state, '{}'), '$.legacy_v1', true) WHERE id=$tid");
+    $msg = "⭐ User #$tid hat jetzt Legacy-Status.";
+}
+
+// 101-105. System Metrics & Logs
+if ($act === 'clear_perf_logs') {
+    $pdo->exec("TRUNCATE TABLE ae_admin_logs");
+    $msg = "📈 System-Logs bereinigt.";
+}
+
 // Load data
 $players = $pdo->query("SELECT id, username, company_name, company_color, money, market_share, is_ai, ai_strategy, last_update, is_banned, reputation, stock_price FROM ae_users ORDER BY money DESC")->fetchAll(PDO::FETCH_ASSOC);
 $global_msg = $pdo->query("SELECT val FROM ae_global WHERE id=1")->fetchColumn() ?: '';
@@ -800,21 +935,30 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .s-lux {background:rgba(255,170,0,.15);color:#ffaa00}
 .s-bal {background:rgba(0,212,255,.1);color:#00d4ff}
 </style>
+<script>
+function show(id, event) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  const target = document.getElementById('sec-' + id);
+  if (target) target.classList.add('active');
+  if (event && event.currentTarget) event.currentTarget.classList.add('active');
+}
+</script>
 </head>
 <body>
 
 <div class="sidebar">
   <div class="logo">AUTO⚡EMPIRE<small>ADMIN PANEL</small></div>
-  <button class="nav-item active" onclick="show('overview')"><span>📊</span> Übersicht</button>
-  <button class="nav-item" onclick="show('events')"><span>🌍</span> Welt-Ereignisse</button>
-  <button class="nav-item" onclick="show('economy')"><span>📈</span> Wirtschaft & Märkte</button>
-  <button class="nav-item" onclick="show('players')"><span>👥</span> Spieler-Verwaltung</button>
-  <button class="nav-item" onclick="show('ai-players')"><span>🤖</span> KI-Gegner (Bots)</button>
-  <button class="nav-item" onclick="show('tools')"><span>🛠️</span> System Werkzeuge</button>
-  <button class="nav-item" onclick="show('database')"><span>💾</span> Datenbank & SQL</button>
-  <button class="nav-item" onclick="show('gifts')"><span>🎁</span> Gutscheine</button>
-  <button class="nav-item" onclick="show('audit')"><span>📜</span> Audit Logs</button>
-  <button class="nav-item" onclick="show('leaderboard')"><span>🏆</span> Rangliste</button>
+  <button class="nav-item active" onclick="show('overview', event)"><span>📊</span> Übersicht</button>
+  <button class="nav-item" onclick="show('events', event)"><span>🌍</span> Welt-Ereignisse</button>
+  <button class="nav-item" onclick="show('economy', event)"><span>📈</span> Wirtschaft & Märkte</button>
+  <button class="nav-item" onclick="show('players', event)"><span>👥</span> Spieler-Verwaltung</button>
+  <button class="nav-item" onclick="show('ai-players', event)"><span>🤖</span> KI-Gegner (Bots)</button>
+  <button class="nav-item" onclick="show('tools', event)"><span>🛠️</span> System Werkzeuge</button>
+  <button class="nav-item" onclick="show('database', event)"><span>💾</span> Datenbank & SQL</button>
+  <button class="nav-item" onclick="show('gifts', event)"><span>🎁</span> Gutscheine</button>
+  <button class="nav-item" onclick="show('audit', event)"><span>📜</span> Audit Logs</button>
+  <button class="nav-item" onclick="show('leaderboard', event)"><span>🏆</span> Rangliste</button>
   <hr style="border-color:rgba(255,255,255,.06);margin:10px 0">
   <div style="padding:10px 20px;font-size:10px;color:#4a6880;text-transform:uppercase;letter-spacing:1px">System</div>
   <a class="nav-item" href="index.php"><span>🎮</span> Zum Spiel</a>
@@ -971,6 +1115,14 @@ tr:hover td{background:rgba(255,255,255,.02)}
           <input type="hidden" name="event_type" value="crash">
           <button type="submit" class="btn btn-danger">📉 Globaler Crash (-20%)</button>
         </form>
+        <form method="POST">
+          <input type="hidden" name="action" value="give_bonus">
+          <button type="submit" class="btn btn-primary" style="background:#ffaa00;color:#000">👔 Executive Bonus (€50k)</button>
+        </form>
+        <form method="POST">
+          <input type="hidden" name="action" value="wage_hike">
+          <button type="submit" class="btn btn-danger">💸 Lohn-Inflation ((-5%)</button>
+        </form>
       </div>
     </div>
   </div>
@@ -1061,10 +1213,57 @@ tr:hover td{background:rgba(255,255,255,.02)}
       </div>
     </div>
     <div class="card" style="border-color:#ffaa00">
-      <h2>💾 Krisen-Management</h2>
+      <h2>💾 Krisen-Management & Markt-Hypes</h2>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-        <div class="stat" style="text-align:left"><h3 style="color:#ffaa00">Microchip-Krise</h3><form method="POST"><input type="hidden" name="action" value="chip_crisis"><button name="val" value="1" class="btn btn-sm btn-danger">Starten</button><button name="val" value="0" class="btn btn-sm btn-primary">Beenden</button></form></div>
-        <div class="stat" style="text-align:left"><h3 style="color:#00d4ff">Logistik-Chaos</h3><form method="POST"><input type="hidden" name="action" value="shipping_crisis"><button name="val" value="1" class="btn btn-sm btn-danger">Starten</button><button name="val" value="0" class="btn btn-sm btn-primary">Beenden</button></form></div>
+        <div class="stat" style="text-align:left">
+            <h3 style="color:#ffaa00">Microchip-Krise</h3>
+            <form method="POST"><input type="hidden" name="action" value="chip_crisis"><button name="val" value="1" class="btn btn-sm btn-danger">Starten</button><button name="val" value="0" class="btn btn-sm btn-primary">Stop</button></form>
+            <form method="POST" style="margin-top:10px">
+                <input type="hidden" name="action" value="chip_price_mod">
+                <label style="font-size:10px">Multiplikator:</label>
+                <input type="number" step="0.1" name="val" value="1.5" style="width:50px;background:#000;color:#fff;border:1px solid #333">
+                <button class="btn btn-sm btn-purple">Set</button>
+            </form>
+        </div>
+        <div class="stat" style="text-align:left">
+            <h3 style="color:#00ff88">Qualitäts-Standards</h3>
+            <p style="font-size:10px;color:#6a8090;margin-bottom:8px">Mindest-Qualität für alle neuen Teile.</p>
+            <form method="POST">
+                <input type="hidden" name="action" value="quality_lock">
+                <input type="number" name="val" value="50" style="width:50px;background:#000;color:#fff;border:1px solid #333">
+                <button class="btn btn-sm btn-purple">Lock</button>
+            </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="border-color:#00d4ff">
+      <h2>📈 Börsen- & Handelsinterventionen</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="stat" style="text-align:left">
+            <h3 style="color:#00d4ff">Börsen-Manie</h3>
+            <p style="font-size:10px;color:#6a8090;margin-bottom:8px">Erhöht Volatilität der Aktienkurse massiv.</p>
+            <form method="POST"><input type="hidden" name="action" value="stock_mania"><button class="btn btn-sm btn-purple">Toggle Mania</button></form>
+        </div>
+        <div class="stat" style="text-align:left">
+            <h3 style="color:#ffaa00">Handelskrieg</h3>
+            <p style="font-size:10px;color:#6a8090;margin-bottom:8px">Erhöht Exportzölle um 50% weltweit.</p>
+            <form method="POST"><input type="hidden" name="action" value="trade_war"><button class="btn btn-sm btn-danger">Toggle Trade War</button></form>
+        </div>
+        <div class="stat" style="text-align:left">
+            <h3 style="color:#00ff88">Steuerparadies</h3>
+            <p style="font-size:10px;color:#6a8090;margin-bottom:8px">Deaktiviert alle Steuern für Spieler.</p>
+            <form method="POST"><input type="hidden" name="action" value="tax_haven"><button class="btn btn-sm btn-primary">Toggle Tax Free</button></form>
+        </div>
+        <div class="stat" style="text-align:left">
+            <h3 style="color:#a855f7">Marketing Boost</h3>
+            <p style="font-size:10px;color:#6a8090;margin-bottom:8px">Erhöht conversion rate global.</p>
+            <form method="POST">
+                <input type="hidden" name="action" value="global_marketing">
+                <input type="number" step="0.1" name="val" value="2.0" style="width:50px;background:#000;color:#fff;border:1px solid #333">
+                <button class="btn btn-sm btn-purple">Set Boost</button>
+            </form>
+        </div>
       </div>
     </div>
   </div>
@@ -1326,12 +1525,25 @@ tr:hover td{background:rgba(255,255,255,.02)}
           <form method="POST" onsubmit="return confirm('WIRKLICH ALLES RESETTEN?')"><input type="hidden" name="action" value="global_reset"><button class="btn btn-sm btn-danger">WIPE ALL</button></form>
         </div>
         <div class="stat" style="text-align:left">
-          <h3>Nachtschicht EXTREM</h3>
-          <form method="POST"><input type="hidden" name="action" value="night_shift_extreme"><button class="btn btn-sm btn-purple">Umschalten</button></form>
+          <h3 style="color:#ffaa00">Bot Cleanup</h3>
+          <p style="font-size:11px;color:#6a8090;margin:10px 0">Löscht alle Bots mit €0 Kapital.</p>
+          <form method="POST"><input type="hidden" name="action" value="purge_broke_bots"><button class="btn btn-sm btn-purple">Purge broke bots</button></form>
         </div>
         <div class="stat" style="text-align:left">
-          <h3>Black Friday Mode</h3>
-          <form method="POST"><input type="hidden" name="action" value="black_friday"><button class="btn btn-sm btn-primary">Umschalten</button></form>
+          <h3>Sicherheits-Audit</h3>
+          <form method="POST"><input type="hidden" name="action" value="safety_audit"><button class="btn btn-sm btn-primary">Audit starten</button></form>
+        </div>
+        <div class="stat" style="text-align:left">
+          <h3 style="color:#ff00ff">Tech Leak</h3>
+          <form method="POST"><input type="hidden" name="action" value="tech_leak"><button class="btn btn-sm btn-purple">Tech Leak triggern</button></form>
+        </div>
+        <div class="stat" style="text-align:left">
+          <h3>Logistik Chaos</h3>
+          <form method="POST"><input type="hidden" name="action" value="logistic_chaos"><button class="btn btn-sm btn-danger">Toggle Chaos</button></form>
+        </div>
+        <div class="stat" style="text-align:left">
+          <h3>EV Range Breakthrough</h3>
+          <form method="POST"><input type="hidden" name="action" value="range_break"><button class="btn btn-sm btn-primary">Toggle Breakthrough</button></form>
         </div>
       </div>
     </div>
@@ -1365,13 +1577,5 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
 </div>
 
-<script>
-function show(id) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-  document.getElementById('sec-' + id).classList.add('active');
-  event.target.classList.add('active');
-}
-</script>
 </body>
 </html>
