@@ -892,9 +892,9 @@ if ($act === 'clear_perf_logs') {
 }
 
 // Refresh stats for display
-$global_msg  = $pdo->query("SELECT val FROM ae_global WHERE id=1")->fetchColumn() ?: '';
-$real_count  = count(array_filter($players, fn($p) => !$p['is_ai']));
-$ai_count    = count(array_filter($players, fn($p) =>  $p['is_ai']));
+$global_msg  = $pdo->query("SELECT val FROM ae_global WHERE id=1") ? $pdo->query("SELECT val FROM ae_global WHERE id=1")->fetchColumn() : '';
+$real_count  = count(array_filter($players, function($p) { return !$p['is_ai']; }));
+$ai_count    = count(array_filter($players, function($p) { return $p['is_ai']; }));
 $total_money = array_sum(array_column($players, 'money'));
 ?>
 <!DOCTYPE html>
@@ -1294,7 +1294,10 @@ function show(id, event) {
     </div>
     <div class="card">
         <h2>📑 Aktive Codes</h2>
-        <?php $codes = $pdo->query("SELECT * FROM ae_codes WHERE used=0")->fetchAll(PDO::FETCH_ASSOC); ?>
+        <?php 
+          $res = $pdo->query("SELECT * FROM ae_codes WHERE used=0");
+          $codes = ($res) ? $res->fetchAll(PDO::FETCH_ASSOC) : []; 
+        ?>
         <table>
             <thead><tr><th>Code</th><th>Typ</th><th>Inhalt</th><th>Status</th></tr></thead>
             <tbody>
@@ -1418,7 +1421,7 @@ function show(id, event) {
   <div class="section" id="sec-ai-players">
     <div class="card">
       <h2>🤖 KI-Spieler verwalten</h2>
-      <?php $bots = array_filter($players, fn($p) => $p['is_ai']); ?>
+      <?php $bots = array_filter($players, function($p) { return $p['is_ai']; }); ?>
       <?php if (empty($bots)): ?>
         <p style="color:#4a6880;font-size:13px;text-align:center;padding:20px">Noch keine KI-Spieler vorhanden.<br>Füge welche über "KI hinzufügen" hinzu.</p>
       <?php else: ?>
@@ -1503,7 +1506,8 @@ function show(id, event) {
     <h2>📜 System-Ankündigung (MoTD)</h2>
     <?php 
       $res = $pdo->query("SELECT val FROM ae_global WHERE id=28");
-      $motd = ($res) ? ($res->fetchColumn() ?: 'Willkommen bei Auto Empire!') : 'Willkommen!';
+      $motd_val = ($res) ? $res->fetchColumn() : 'Willkommen bei Auto Empire!';
+      $motd = $motd_val ?: 'Willkommen bei Auto Empire!'; 
     ?>
     <form method="POST" style="display:flex;gap:10px">
         <input type="hidden" name="action" value="set_motd">
