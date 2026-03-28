@@ -78,10 +78,15 @@ if (!isset($_SESSION['user_id'])) {
     // 🌍 AUTH / LANDING PAGE STATS
     $home_stats = ['players' => 0, 'capital' => 0, 'top' => []];
     try {
-        $home_stats['players'] = (int)$pdo->query("SELECT COUNT(*) FROM ae_users WHERE is_ai=0")->fetchColumn();
-        $home_stats['capital'] = (int)$pdo->query("SELECT SUM(money) FROM ae_users")->fetchColumn();
-        $home_stats['top']     = $pdo->query("SELECT company_name, money FROM ae_users WHERE is_ai=0 ORDER BY money DESC LIMIT 3")->fetchAll(PDO::FETCH_ASSOC);
-    } catch(Exception $e) {}
+        $res_p = $pdo->query("SELECT COUNT(*) FROM ae_users WHERE is_ai=0");
+        if ($res_p) $home_stats['players'] = (int)$res_p->fetchColumn();
+        
+        $res_c = $pdo->query("SELECT SUM(money) FROM ae_users");
+        if ($res_c) $home_stats['capital'] = (int)$res_c->fetchColumn();
+        
+        $res_t = $pdo->query("SELECT company_name, money FROM ae_users WHERE is_ai=0 ORDER BY money DESC LIMIT 3");
+        if ($res_t) $home_stats['top'] = $res_t->fetchAll(PDO::FETCH_ASSOC);
+    } catch(Exception $e) {} catch(Error $e2) {}
 
     echo $twig->render('auth.twig', [
         'error' => $error,

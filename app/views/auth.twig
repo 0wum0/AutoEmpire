@@ -73,11 +73,11 @@
         <div class="pulse-box">
             <div class="pulse-header">
                 <div><span>🔴</span> Live Game Pulse</div>
-                <div>Global Revenue: <span style="color:var(--go)">€{{ (stats.capital / 1000000)|number_format(1) }}M</span></div>
+                <div>Global Revenue: <span style="color:var(--go)">€{{ ((stats.capital ?? 0) / 1000000)|number_format(1) }}M</span></div>
             </div>
             <div class="chart-sim" id="live-chart">
                 {% for i in 1..40 %}
-                    <div class="bar" style="height: {{ range(20, 90)|random }}%"></div>
+                    <div class="bar" style="height: 40%"></div>
                 {% endfor %}
             </div>
             <div style="font-size: 10px; color: #4a6880; margin-top: 12px; display:flex; justify-content: space-between;">
@@ -94,7 +94,7 @@
                 <div class="stat-lbl">Aktive CEOs</div>
             </div>
             <div class="stat-card">
-                <div class="stat-val">€{{ (stats.capital / 1000) | number_format(0, ',', '.') }}k</div>
+                <div class="stat-val">€{{ ((stats.capital ?? 0) / 1000) | number_format(0, ',', '.') }}k</div>
                 <div class="stat-lbl">Marktkapitalisierung</div>
             </div>
             <div class="stat-card">
@@ -103,7 +103,7 @@
                     {% for p in stats.top %}
                         <div class="top3-item">
                             <span>#{{ loop.index }} {{ p.company_name }}</span>
-                            <span style="color:var(--go)">€{{ (p.money / 1000) | number_format(0, ',', '.') }}k</span>
+                            <span style="color:var(--go)">€{{ ((p.money ?? 0) / 1000) | number_format(0, ',', '.') }}k</span>
                         </div>
                     {% endfor %}
                 </div>
