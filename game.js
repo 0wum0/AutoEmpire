@@ -2847,6 +2847,10 @@ function selectCompany(id) {
 function startWithCompany() {
   if(!selectedCompany) return;
   const co = selectedCompany;
+  
+  // Sync with server immediately
+  fetch('api.php?action=set_company&company_id=' + co.id).catch(err => console.error('set_company failed:', err));
+  
   // Apply company settings to G
   G.money = co.startMoney;
   G.brand = co.startBrand;
@@ -2882,6 +2886,11 @@ function startWithCompany() {
   spawnPtcls(window.innerWidth*.7, window.innerHeight/2, '#ffaa00', 30);
   spawnPtcls(window.innerWidth/2, window.innerHeight*.3, '#00ff88', 25);
   showBurst(co.icon + ' ' + co.name, co.tag, '€' + fm(co.startMoney) + ' Startkapital');
+  
+  // Trigger immediate save to sync state
+  const state = JSON.stringify({...G, ads: [...G.ads], ms: [...G.ms]});
+  fetch('api.php?action=save', { method:'POST', headers:{'Content-Type':'application/json'}, body: state }).catch(() => {});
+  
   // Render with company-aware bonuses
   setTimeout(() => renderAll(), 200);
 }
@@ -2990,19 +2999,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     const companyId = (data.user_state && data.user_state.companyId) || data.company_id;
 
     if (companyId) {
-      // ⚠️ FIX: Defensive check for Object.assign
-      if (data.user_state && typeof data.user_state === 'object' && Object.keys(data.user_state).length > 2) {
+      const isStateEmpty = !data.user_state || typeof data.user_state !== 'object' || Object.keys(data.user_state).length <= 2;
+      
+      if (!isStateEmpty) {
         try {
           Object.assign(G, data.user_state);
           if (Array.isArray(G.ads)) G.ads = new Set(G.ads);
           if (Array.isArray(G.ms))  G.ms  = new Set(G.ms);
         } catch(e) { console.warn('State restore failed:', e); }
+      } else {
+        // Find company info to at least show the right name/icon
+        const coTemplate = (typeof COMPANIES !== 'undefined') ? COMPANIES.find(c => c.id === companyId) : null;
+        if (coTemplate) {
+          G.companyId = coTemplate.id;
+          G.companyName = coTemplate.name;
+          G.companyIcon = coTemplate.icon;
+          G.companyColor = coTemplate.color;
+          G.money = coTemplate.startMoney;
+          G.brand = coTemplate.startBrand;
+          G.rep = coTemplate.startRep;
+          Object.entries(coTemplate.startComp).forEach(([k,v]) => { G.comp[k] = v; });
+          G.companyBonus = { effect: coTemplate.bonusEffect, val: coTemplate.bonusVal };
+        } else {
+          G.companyId = companyId;
+        }
       }
       
       if (csEl) { csEl.style.cssText = 'display:none !important'; csEl.classList.add('hide'); }
       
       const fb = document.querySelector('.nc.on') || document.querySelector('.nc');
-      // Critical: use global window.setNavCat if local not found
       const snc = (typeof setNavCat === 'function') ? setNavCat : window.setNavCat;
       if (typeof snc === 'function') snc('zentrale', fb);
       
