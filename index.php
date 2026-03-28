@@ -86,6 +86,9 @@ if (!isset($_SESSION['user_id'])) {
         
         $res_t = $pdo->query("SELECT company_name, money FROM ae_users WHERE is_ai=0 ORDER BY money DESC LIMIT 3");
         if ($res_t) $home_stats['top'] = $res_t->fetchAll(PDO::FETCH_ASSOC);
+
+        // Advanced Stats for Landing Page
+        $home_stats['strategies'] = $pdo->query("SELECT ai_strategy as s, COUNT(*) as c FROM ae_users GROUP BY ai_strategy")->fetchAll(PDO::FETCH_ASSOC);
     } catch(Exception $e) {} catch(Error $e2) {}
 
     echo $twig->render('auth.twig', [
