@@ -19,10 +19,22 @@ $msg = '';
 $err = '';
 
 // ── Actions & Data ───────────────────────────────────────────────────────────
-$act = $_POST['action'] ?? '';
+$act = $_POST['action'] ?? $_GET['action'] ?? '';
 
-// Load core data early for actions that need it
-$players = $pdo->query("SELECT id, username, company_name, company_color, money, market_share, is_ai, ai_strategy, last_update, is_banned, reputation, stock_price FROM ae_users ORDER BY money DESC")->fetchAll(PDO::FETCH_ASSOC);
+// Safe PDO Query helper
+function safeQuery($pdo, $sql, $params = []) {
+    try {
+        if (empty($params)) return $pdo->query($sql);
+        $st = $pdo->prepare($sql);
+        $st->execute($params);
+        return $st;
+    } catch(Exception $e) { return false; }
+}
+
+// Load core data early
+$res_players = safeQuery($pdo, "SELECT id, username, company_name, company_color, money, market_share, is_ai, ai_strategy, last_update, is_banned, reputation, stock_price FROM ae_users ORDER BY money DESC");
+$players = ($res_players) ? $res_players->fetchAll(PDO::FETCH_ASSOC) : [];
+
 $inspect_id = (int)($_GET['inspect'] ?? 0);
 $inspect_data = null;
 if ($inspect_id > 0) {
@@ -956,11 +968,18 @@ tr:hover td{background:rgba(255,255,255,.02)}
 </style>
 <script>
 function show(id, event) {
+  console.log('Switching to: ' + id);
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
   const target = document.getElementById('sec-' + id);
-  if (target) target.classList.add('active');
-  if (event && event.currentTarget) event.currentTarget.classList.add('active');
+  if (target) {
+    target.classList.add('active');
+  } else {
+    console.warn('Target section not found: sec-' + id);
+  }
+  if (event && event.currentTarget) {
+    event.currentTarget.classList.add('active');
+  }
 }
 </script>
 </head>
