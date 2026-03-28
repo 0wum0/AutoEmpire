@@ -84,12 +84,37 @@ if ($act === 'delete_ai') {
     }
 }
 
-// Reset player state
-if ($act === 'reset_player') {
-    $reset_id = (int)($_POST['reset_id'] ?? 0);
-    if ($reset_id > 0) {
-        $pdo->prepare("UPDATE ae_users SET json_state=NULL, company_id=NULL, money=500000, market_share=0 WHERE id=?")->execute([$reset_id]);
-        $msg = "✅ Spieler #$reset_id wurde zurückgesetzt.";
+// Update player money
+if ($act === 'edit_money') {
+    $edit_id = (int)($_POST['edit_id'] ?? 0);
+    $new_amount = (int)($_POST['money'] ?? 0);
+    if ($edit_id > 0) {
+        $stmt = $pdo->prepare("UPDATE ae_users SET money=? WHERE id=?");
+        $stmt->execute([$new_amount, $edit_id]);
+        $msg = "✅ Kapital für Spieler #$edit_id auf €" . number_format($new_amount, 0, ',', '.') . " gesetzt.";
+    }
+}
+
+// Update AI strategy
+if ($act === 'update_strategy') {
+    $ai_id = (int)($_POST['ai_id'] ?? 0);
+    $strat = $_POST['strategy'] ?? 'balanced';
+    if ($ai_id > 0) {
+        $stmt = $pdo->prepare("UPDATE ae_users SET ai_strategy=? WHERE id=?");
+        $stmt->execute([$strat, $ai_id]);
+        $msg = "✅ Strategie für KI #$ai_id auf '$strat' aktualisiert.";
+    }
+}
+
+// Global market crash / boom
+if ($act === 'global_event') {
+    $type = $_POST['event_type'] ?? '';
+    if ($type === 'crash') {
+        $pdo->exec("UPDATE ae_users SET money = money * 0.8");
+        $msg = "📉 Globaler Crash ausgelöst! Alle Kontostände um 20% reduziert.";
+    } elseif ($type === 'boom') {
+        $pdo->exec("UPDATE ae_users SET money = money * 1.15");
+        $msg = "🚀 Wirtschafts-Boom ausgelöst! Alle Kontostände um 15% erhöht.";
     }
 }
 
@@ -167,23 +192,45 @@ tr:hover td{background:rgba(255,255,255,.02)}
 <div class="sidebar">
   <div class="logo">AUTO⚡EMPIRE<small>ADMIN PANEL</small></div>
   <button class="nav-item active" onclick="show('overview')"><span>📊</span> Übersicht</button>
+  <button class="nav-item" onclick="show('events')"><span>🌍</span> Welt-Ereignisse</button>
   <button class="nav-item" onclick="show('players')"><span>👥</span> Spieler</button>
   <button class="nav-item" onclick="show('leaderboard')"><span>🏆</span> Rangliste</button>
   <button class="nav-item" onclick="show('ai-players')"><span>🤖</span> KI-Spieler</button>
   <button class="nav-item" onclick="show('add-ai')"><span>➕</span> KI hinzufügen</button>
   <hr style="border-color:rgba(255,255,255,.06);margin:10px 0">
+  <div style="padding:10px 20px;font-size:10px;color:#4a6880;text-transform:uppercase;letter-spacing:1px">System</div>
   <a class="nav-item" href="index.php"><span>🎮</span> Zum Spiel</a>
   <a class="nav-item" href="update.php?token=ae_update_2024"><span>🔄</span> DB Update</a>
 </div>
 
 <div class="main">
   <div class="topbar">
-    <h1>⚡ Auto Empire Admin</h1>
+    <h1>⚡ Auto Empire Admin Panel</h1>
     <a href="index.php" style="color:#4a6880;text-decoration:none;font-size:13px">← Zum Spiel</a>
   </div>
 
   <?php if ($msg): ?><div class="alert alert-ok"><?= htmlspecialchars($msg) ?></div><?php endif; ?>
   <?php if ($err): ?><div class="alert alert-err"><?= htmlspecialchars($err) ?></div><?php endif; ?>
+
+  <?php
+  $inspect_id = (int)($_GET['inspect'] ?? 0);
+  $inspect_data = null;
+  if ($inspect_id > 0) {
+      $stmt = $pdo->prepare("SELECT username, json_state FROM ae_users WHERE id=?");
+      $stmt->execute([$inspect_id]);
+      $inspect_data = $stmt->fetch(PDO::FETCH_ASSOC);
+  }
+  ?>
+
+  <?php if ($inspect_data): ?>
+  <div class="card" style="border-color:#a855f7">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h2 style="color:#a855f7;margin:0">🔍 Inspektion: <?= htmlspecialchars($inspect_data['username']) ?> (#<?= $inspect_id ?>)</h2>
+        <a href="admin.php" class="btn btn-sm btn-danger">Schließen</a>
+    </div>
+    <pre style="background:rgba(0,0,0,.4);padding:15px;border-radius:8px;font-size:11px;overflow:auto;max-height:400px;color:#a0c0ff"><?= htmlspecialchars(json_encode(json_decode($inspect_data['json_state']), JSON_PRETTY_PRINT)) ?></pre>
+  </div>
+  <?php endif; ?>
 
   <!-- OVERVIEW -->
   <div class="section active" id="sec-overview">
@@ -191,15 +238,55 @@ tr:hover td{background:rgba(255,255,255,.02)}
       <div class="stat"><div class="stat-n"><?= count($players) ?></div><div class="stat-l">Spieler gesamt</div></div>
       <div class="stat"><div class="stat-n"><?= $real_count ?></div><div class="stat-l">Echte Spieler</div></div>
       <div class="stat"><div class="stat-n" style="color:#a855f7"><?= $ai_count ?></div><div class="stat-l">KI-Bots</div></div>
-      <div class="stat"><div class="stat-n" style="color:#00d450;font-size:18px">€<?= number_format($total_money, 0, ',', '.') ?></div><div class="stat-l">Gesamt-Kapital</div></div>
+      <div class="stat"><div class="stat-n" style="color:#00d450;font-size:18px">€<?= number_format($total_money, 0, ',', '.') ?></div><div class="stat-l">System-Kapital</div></div>
     </div>
 
     <div class="card">
       <h2>⚡ Schnellaktionen</h2>
-      <form method="POST" style="display:inline">
-        <input type="hidden" name="action" value="ai_tick">
-        <button type="submit" class="btn btn-purple">🤖 KI-Tick ausführen (alle Bots +Einkommen)</button>
-      </form>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <form method="POST">
+          <input type="hidden" name="action" value="ai_tick">
+          <button type="submit" class="btn btn-purple">🤖 KI-Tick ausführen (+Einkommen)</button>
+        </form>
+        <form method="POST">
+          <input type="hidden" name="action" value="global_event">
+          <input type="hidden" name="event_type" value="boom">
+          <button type="submit" class="btn btn-primary" style="background:#00d450">🚀 Globaler Boom (+15%)</button>
+        </form>
+        <form method="POST">
+          <input type="hidden" name="action" value="global_event">
+          <input type="hidden" name="event_type" value="crash">
+          <button type="submit" class="btn btn-danger">📉 Globaler Crash (-20%)</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- EVENTS -->
+  <div class="section" id="sec-events">
+    <div class="card">
+      <h2>🌍 Globale Welt-Ereignisse</h2>
+      <p style="margin-bottom:15px;color:#a0a8c0;font-size:13px">Beeinflusse die gesamte Spielwelt mit einem Klick.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="stat" style="text-align:left">
+          <h3 style="color:#00d450;margin-bottom:10px">Wirtschafts-Boom</h3>
+          <p style="font-size:12px;margin-bottom:12px;color:#6a8090">Erhöht das Kapital aller Spieler um 15%. Simuliert eine Phase hohen Marktwachstums.</p>
+          <form method="POST">
+            <input type="hidden" name="action" value="global_event">
+            <input type="hidden" name="event_type" value="boom">
+            <button class="btn btn-primary" style="width:100%;background:#00d450">Auslösen</button>
+          </form>
+        </div>
+        <div class="stat" style="text-align:left">
+          <h3 style="color:#ff6666;margin-bottom:10px">Markt-Crash</h3>
+          <p style="font-size:12px;margin-bottom:12px;color:#6a8090">Verrringert das Kapital aller Spieler um 20%. Simuliert eine schwere Rezession.</p>
+          <form method="POST">
+            <input type="hidden" name="action" value="global_event">
+            <input type="hidden" name="event_type" value="crash">
+            <button class="btn btn-danger" style="width:100%">Auslösen</button>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -229,24 +316,34 @@ tr:hover td{background:rgba(255,255,255,.02)}
               <span class="color-dot" style="background:<?= htmlspecialchars($p['company_color'] ?: '#888') ?>"></span>
               <?= htmlspecialchars($p['company_name'] ?: '—') ?>
             </td>
-            <td class="money">€<?= number_format($p['money'], 0, ',', '.') ?></td>
+            <td class="money">
+              <form method="POST" style="display:flex;gap:5px;align-items:center">
+                <input type="hidden" name="action" value="edit_money">
+                <input type="hidden" name="edit_id" value="<?= $p['id'] ?>">
+                <input type="number" name="money" value="<?= (int)$p['money'] ?>" style="width:110px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,0.1);color:#00d450;font-family:monospace;padding:4px;border-radius:4px;font-size:12px">
+                <button type="submit" class="btn btn-sm btn-primary" style="padding:4px 8px">Set</button>
+              </form>
+            </td>
             <td><?= number_format($p['market_share'], 1) ?>%</td>
             <td style="color:#4a6880;font-size:11px"><?= $p['last_update'] ? date('d.m H:i', strtotime($p['last_update'])) : '—' ?></td>
             <td>
-              <?php if ($p['id'] != 1): ?>
-              <form method="POST" style="display:inline" onsubmit="return confirm('Spieler zurücksetzen?')">
-                <input type="hidden" name="action" value="reset_player">
-                <input type="hidden" name="reset_id" value="<?= $p['id'] ?>">
-                <button type="submit" class="btn btn-sm btn-danger">↺ Reset</button>
-              </form>
-              <?php if ($p['is_ai']): ?>
-              <form method="POST" style="display:inline" onsubmit="return confirm('KI löschen?')">
-                <input type="hidden" name="action" value="delete_ai">
-                <input type="hidden" name="del_id" value="<?= $p['id'] ?>">
-                <button type="submit" class="btn btn-sm btn-danger">🗑</button>
-              </form>
-              <?php endif; ?>
-              <?php endif; ?>
+              <div style="display:flex;gap:5px">
+                <?php if ($p['id'] != 1): ?>
+                <form method="POST" onsubmit="return confirm('Spieler zurücksetzen?')">
+                  <input type="hidden" name="action" value="reset_player">
+                  <input type="hidden" name="reset_id" value="<?= $p['id'] ?>">
+                  <button type="submit" class="btn btn-sm btn-danger" title="Zustand zurücksetzen">↺ Reset</button>
+                </form>
+                <?php if ($p['is_ai']): ?>
+                <form method="POST" onsubmit="return confirm('KI löschen?')">
+                  <input type="hidden" name="action" value="delete_ai">
+                  <input type="hidden" name="del_id" value="<?= $p['id'] ?>">
+                  <button type="submit" class="btn btn-sm btn-danger" title="KI löschen">🗑</button>
+                </form>
+                <?php endif; ?>
+                <a href="admin.php?inspect=<?= $p['id'] ?>" class="btn btn-sm btn-purple" title="JSON ansehen">👁</a>
+                <?php endif; ?>
+              </div>
             </td>
           </tr>
           <?php endforeach; ?>

@@ -35,7 +35,10 @@
 
 <div id="app">
 <div class="hdr">
-  <div class="logo">AUTO⚡EMPIRE <a href="index.php?logout=1" style="font-size:10px;color:red;margin-left:10px;text-decoration:none;">[Logout]</a></div>
+  <div class="logo">AUTO⚡EMPIRE 
+    <a id="admin-link" href="admin.php" style="display:none;font-size:10px;color:#a855f7;margin-left:10px;text-decoration:none;border:1px solid #a855f7;padding:2px 5px;border-radius:3px;">[Admin]</a>
+    <a href="index.php?logout=1" style="font-size:10px;color:red;margin-left:10px;text-decoration:none;">[Logout]</a>
+  </div>
   <div class="hs">
     <div class="hb"><span class="hl">Kapital</span><span class="hv" id="hm">€500k</span></div>
     <div class="hb"><span class="hl">Aktie</span><span class="hv" id="hstk">€100</span></div>
@@ -400,6 +403,6 @@
 <button id="pbtn" onclick="prestige()">⟳ PRESTIGE</button>
 <div id="notifs"></div>
 
-<script src="game.js?v=multiplayer_fix_v7"></script>
+<script src="game.js?v=multiplayer_fix_v8"></script>
 </body>
 </html>

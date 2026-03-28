@@ -84,6 +84,7 @@ if ($action === 'init') {
 
     echo json_encode([
         'status'             => 'ok',
+        'uid'                => $uid,
         'user_state'         => $user_state,
         'company_id'         => $company_id,   // also top-level for easy frontend check
         'multiplayer_rivals' => $rivals,
@@ -95,9 +96,9 @@ if ($action === 'init') {
 // ── SET COMPANY ───────────────────────────────────────────────────────────────
 if ($action === 'set_company') {
     $body          = json_decode(file_get_contents('php://input'), true);
-    $company_id    = $body['company_id']    ?? null;
-    $company_name  = $body['company_name']  ?? null;
-    $company_color = $body['company_color'] ?? '#00d4ff';
+    $company_id    = $body['company_id']    ?? ($_GET['company_id'] ?? null);
+    $company_name  = $body['company_name']  ?? ($_GET['company_name'] ?? null);
+    $company_color = $body['company_color'] ?? ($_GET['company_color'] ?? '#00d4ff');
     if (!$company_id) { echo json_encode(['error' => 'No company_id']); exit; }
 
     // Ensure columns exist (graceful)

@@ -2992,6 +2992,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
+    if (data.uid === 1) {
+      const al = document.getElementById('admin-link');
+      if (al) al.style.display = 'inline-block';
+    }
+
     if (data.multiplayer_rivals) {
       window.RIVALS = data.multiplayer_rivals;
     }
