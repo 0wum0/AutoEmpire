@@ -1702,11 +1702,14 @@ function newsTick() {
 // ─── CHALLENGE TICK ───
 function challengeTick() {
   // Init challenges if empty
-  if(G.challenges.length === 0) {
+  // Reinit if any challenge has non-function target (happens after JSON restore)
+  const hasDeadChallenges = G.challenges.some(ch => typeof ch.target !== 'function');
+  if(G.challenges.length === 0 || hasDeadChallenges) {
     G.challenges = CHALLENGE_POOL.slice(0, 3).map(c => ({...c, progress: 0, done: false, startVal: c.target()}));
   }
   G.challenges.forEach(ch => {
     if(ch.done) return;
+    if(typeof ch.target !== 'function') return; // skip deserialized (JSON) entries
     const cur = ch.target();
     ch.progress = Math.min(100, ((cur - ch.startVal) / ch.thresh) * 100);
     if(ch.progress >= 100 && !ch.done) {
