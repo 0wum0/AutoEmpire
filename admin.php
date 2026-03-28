@@ -131,9 +131,19 @@ if ($act === 'edit_money') {
     $edit_id = (int)($_POST['edit_id'] ?? 0);
     $new_amount = (int)($_POST['money'] ?? 0);
     if ($edit_id > 0) {
-        $stmt = $pdo->prepare("UPDATE ae_users SET money=? WHERE id=?");
-        $stmt->execute([$new_amount, $edit_id]);
-        $msg = "✅ Kapital für Spieler #$edit_id auf €" . number_format($new_amount, 0, ',', '.') . " gesetzt.";
+        // 1. Update main column
+        $pdo->prepare("UPDATE ae_users SET money=? WHERE id=?")->execute([$new_amount, $edit_id]);
+        
+        // 2. Sync to JSON state (to ensure ingame persistence)
+        $res = $pdo->prepare("SELECT json_state FROM ae_users WHERE id=?");
+        $res->execute([$edit_id]);
+        $js_raw = $res->fetchColumn();
+        if ($js_raw) {
+            $js = json_decode($js_raw, true);
+            $js['money'] = (int)$new_amount;
+            $pdo->prepare("UPDATE ae_users SET json_state=? WHERE id=?")->execute([json_encode($js), $edit_id]);
+        }
+        $msg = "✅ Kapital für Spieler #$edit_id auf €" . number_format($new_amount, 0, ',', '.') . " gesetzt (Sync OK).";
     }
 }
 
@@ -182,6 +192,8 @@ if ($act === 'rename_user') {
     if ($target_id > 0 && !empty($new_name)) {
         $stmt = $pdo->prepare("UPDATE ae_users SET username=? WHERE id=?");
         $stmt->execute([$new_name, $target_id]);
+        
+        // No sync for username needed as it's not and part of state, but company_name is.
         $msg = "👤 Spieler #$target_id in '$new_name' umbenannt.";
     }
 }
@@ -211,6 +223,16 @@ if ($act === 'edit_share') {
     $tid = (int)$_POST['user_id'];
     $val = (float)$_POST['val'];
     $pdo->prepare("UPDATE ae_users SET market_share=? WHERE id=?")->execute([$val, $tid]);
+    
+    // Sync JSON
+    $cur = $pdo->prepare("SELECT json_state FROM ae_users WHERE id=?");
+    $cur->execute([$tid]);
+    $js_raw = $cur->fetchColumn();
+    if ($js_raw) {
+        $js = json_decode($js_raw, true);
+        $js['market_share'] = $val;
+        $pdo->prepare("UPDATE ae_users SET json_state=? WHERE id=?")->execute([json_encode($js), $tid]);
+    }
     $msg = "📈 Marktanteil für #$tid auf $val% gesetzt.";
 }
 
@@ -219,6 +241,16 @@ if ($act === 'edit_rep') {
     $tid = (int)$_POST['user_id'];
     $val = (int)$_POST['val'];
     $pdo->prepare("UPDATE ae_users SET reputation=? WHERE id=?")->execute([$val, $tid]);
+    
+    // Sync JSON
+    $cur = $pdo->prepare("SELECT json_state FROM ae_users WHERE id=?");
+    $cur->execute([$tid]);
+    $js_raw = $cur->fetchColumn();
+    if ($js_raw) {
+        $js = json_decode($js_raw, true);
+        $js['reputation'] = $val;
+        $pdo->prepare("UPDATE ae_users SET json_state=? WHERE id=?")->execute([json_encode($js), $tid]);
+    }
     $msg = "⭐ Reputation für #$tid auf $val gesetzt.";
 }
 
@@ -370,6 +402,16 @@ if ($act === 'rename_company') {
     $tid = (int)$_POST['user_id'];
     $name = trim($_POST['name']);
     $pdo->prepare("UPDATE ae_users SET company_name=? WHERE id=?")->execute([$name, $tid]);
+    
+    // Sync JSON
+    $cur = $pdo->prepare("SELECT json_state FROM ae_users WHERE id=?");
+    $cur->execute([$tid]);
+    $js_raw = $cur->fetchColumn();
+    if ($js_raw) {
+        $js = json_decode($js_raw, true);
+        $js['company_name'] = $name;
+        $pdo->prepare("UPDATE ae_users SET json_state=? WHERE id=?")->execute([json_encode($js), $tid]);
+    }
     $msg = "🏢 Konzern #$tid in '$name' umbenannt.";
 }
 
