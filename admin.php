@@ -18,18 +18,29 @@ $pdo = getPDO();
 $msg = '';
 $err = '';
 
+// ── Functions ─────────────────────────────────────────────────────────────
+if (!function_exists('safeQuery')) {
+    function safeQuery($pdo, $sql, $params = []) {
+        try {
+            if (empty($params)) return $pdo->query($sql);
+            $st = $pdo->prepare($sql);
+            $st->execute($params);
+            return $st;
+        } catch(Exception $e) { return false; }
+    }
+}
+if (!function_exists('log_admin_action')) {
+    function log_admin_action($pdo, $uid, $action, $details) {
+        if (!$uid) return;
+        try { $pdo->prepare("INSERT INTO ae_admin_logs (admin_id, action, details) VALUES (?,?,?)")->execute([$uid, $action, $details]); } catch(Exception $e){}
+    }
+}
+
 // ── Actions & Data ───────────────────────────────────────────────────────────
 $act = $_POST['action'] ?? $_GET['action'] ?? '';
+log_admin_action($pdo, $_SESSION['user_id'] ?? 1, $act, json_encode($_REQUEST));
 
-// Safe PDO Query helper
-function safeQuery($pdo, $sql, $params = []) {
-    try {
-        if (empty($params)) return $pdo->query($sql);
-        $st = $pdo->prepare($sql);
-        $st->execute($params);
-        return $st;
-    } catch(Exception $e) { return false; }
-}
+// Integrated below actions
 
 // Load core data early
 $res_players = safeQuery($pdo, "SELECT id, username, company_name, company_color, money, market_share, is_ai, ai_strategy, last_update, is_banned, reputation, stock_price FROM ae_users ORDER BY money DESC");
@@ -1229,7 +1240,7 @@ function show(id, event) {
             14 => ['name'=>'Logistikkosten', 'icon'=>'🚢'],
           ];
           foreach($indices as $mid => $idx):
-            $res = $pdo->query("SELECT val FROM ae_global WHERE id=$mid");
+            $res = safeQuery($pdo, "SELECT val FROM ae_global WHERE id=$mid");
             $v = ($res) ? ($res->fetchColumn() ?: 1.0) : 1.0;
         ?>
         <div class="stat" style="text-align:left">
@@ -1314,7 +1325,7 @@ function show(id, event) {
     <div class="card">
         <h2>📑 Aktive Codes</h2>
         <?php 
-          $res = $pdo->query("SELECT * FROM ae_codes WHERE used=0");
+          $res = safeQuery($pdo, "SELECT * FROM ae_codes WHERE used=0");
           $codes = ($res) ? $res->fetchAll(PDO::FETCH_ASSOC) : []; 
         ?>
         <table>
@@ -1333,7 +1344,7 @@ function show(id, event) {
     <div class="card">
         <h2>📜 Admin Audit History</h2>
         <?php 
-          $res = $pdo->query("SELECT * FROM ae_admin_logs ORDER BY created_at DESC LIMIT 50");
+          $res = safeQuery($pdo, "SELECT * FROM ae_admin_logs ORDER BY created_at DESC LIMIT 50");
           $logs = ($res) ? $res->fetchAll(PDO::FETCH_ASSOC) : []; 
         ?>
         <table style="font-size:11px">
@@ -1524,7 +1535,7 @@ function show(id, event) {
   <div class="card" style="margin-top:20px; border-color: rgba(0,212,255,0.2)">
     <h2>📜 System-Ankündigung (MoTD)</h2>
     <?php 
-      $res = $pdo->query("SELECT val FROM ae_global WHERE id=28");
+      $res = safeQuery($pdo, "SELECT val FROM ae_global WHERE id=28");
       $motd_val = ($res) ? $res->fetchColumn() : 'Willkommen bei Auto Empire!';
       $motd = $motd_val ?: 'Willkommen bei Auto Empire!'; 
     ?>
