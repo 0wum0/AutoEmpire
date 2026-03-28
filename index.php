@@ -75,7 +75,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if (!isset($_SESSION['user_id'])) {
-    echo $twig->render('auth.twig', ['error' => $error]);
+    // 🌍 AUTH / LANDING PAGE STATS
+    $home_stats = ['players' => 0, 'capital' => 0, 'top' => []];
+    try {
+        $home_stats['players'] = (int)$pdo->query("SELECT COUNT(*) FROM ae_users WHERE is_ai=0")->fetchColumn();
+        $home_stats['capital'] = (int)$pdo->query("SELECT SUM(money) FROM ae_users")->fetchColumn();
+        $home_stats['top']     = $pdo->query("SELECT company_name, money FROM ae_users WHERE is_ai=0 ORDER BY money DESC LIMIT 3")->fetchAll(PDO::FETCH_ASSOC);
+    } catch(Exception $e) {}
+
+    echo $twig->render('auth.twig', [
+        'error' => $error,
+        'stats' => $home_stats
+    ]);
     exit;
 }
 

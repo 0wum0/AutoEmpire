@@ -2,30 +2,174 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>⚡ Auto Empire - Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+    <title>AUTO EMPIRE — The Multi-Million Dollar Simulation</title>
     <link rel="stylesheet" href="game.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --accent: #00d4ff; --go: #00ff88; --pu: #a855f7; --font: 'Outfit', sans-serif; }
+        body { font-family: var(--font); margin:0; background: #060e18; color: #fff; overflow-x: hidden; }
+        
+        /* BACKGROUND VISUALS */
+        .landing-bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; }
+        .grid { position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, rgba(0, 212, 255, 0.1), transparent 70%); opacity: 0.5; }
+        .aurora-glow { position: absolute; width: 600px; height: 600px; background: var(--accent); filter: blur(150px); border-radius: 50%; opacity: 0.15; top: -10%; right: -10%; animation: float 20s infinite alternate; }
+        @keyframes float { from { transform: translate(0,0); } to { transform: translate(-100px, 100px); } }
+
+        .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; }
+        .logo-big { font-size: 56px; font-weight: 900; letter-spacing: -2px; background: linear-gradient(135deg, #fff, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
+        .hero p { font-size: 18px; color: #6a8090; max-width: 600px; line-height: 1.6; margin-bottom: 40px; }
+
+        /* PULSE CHART */
+        .pulse-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 20px; width: 100%; max-width: 800px; margin-bottom: 40px; backdrop-filter: blur(10px); }
+        .pulse-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); }
+        .chart-sim { height: 100px; display: flex; align-items: flex-end; gap: 4px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .bar { flex: 1; background: var(--accent); border-radius: 2px 2px 0 0; opacity: 0.8; transition: height 1s; }
+
+        /* STATS GRID */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; width: 100%; max-width: 1000px; margin-bottom: 60px; }
+        .stat-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); padding: 25px; border-radius: 20px; text-align: center; }
+        .stat-val { font-size: 32px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+        .stat-lbl { font-size: 11px; color: #4a6880; text-transform: uppercase; letter-spacing: 1.5px; }
+
+        /* CTA SECTION */
+        .cta-box { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+        .btn-xl { padding: 18px 40px; border-radius: 14px; font-size: 16px; font-weight: 700; text-decoration: none; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; border: none; }
+        .btn-xl:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 10px 30px rgba(0,212,255,0.3); }
+
+        /* FORMS MODAL */
+        #auth-modal { position: fixed; inset: 0; background: rgba(6, 14, 24, 0.9); backdrop-filter: blur(15px); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
+        #auth-modal.open { display: flex; }
+        .auth-card { background: #0a121e; border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 24px; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 40px 100px rgba(0,0,0,0.8); }
+        .f-switch { display: flex; background: rgba(0,0,0,0.3); border-radius: 10px; padding: 5px; margin-bottom: 25px; }
+        .f-sw-btn { flex: 1; padding: 10px; border: none; background: none; color: #666; cursor: pointer; border-radius: 8px; font-weight: 700; transition: all 0.2s; }
+        .f-sw-btn.on { background: var(--accent); color: #fff; }
+        
+        .field { margin-bottom: 15px; text-align: left; }
+        .field label { display: block; font-size: 10px; text-transform: uppercase; color: #4a6880; margin-bottom: 6px; }
+        .inp { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 14px; color: #fff; outline: none; transition: border-color 0.2s; box-sizing: border-box; }
+        .inp:focus { border-color: var(--accent); }
+
+        .top3-list { margin-top: 15px; }
+        .top3-item { display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 8px 0; font-size: 13px; }
+
+        @media (max-width: 768px) {
+            .logo-big { font-size: 38px; }
+            .hero p { font-size: 15px; }
+        }
+    </style>
 </head>
-<body style="display:flex; justify-content:center; align-items:center; height:100vh;">
-    <div class="glass" style="width: 350px; padding: 30px;">
-        <h1 style="color:var(--cy); font-size:20px; text-align:center; margin-bottom:20px;">⚡ Auto Empire Multiplayer</h1>
-        {% if error %}
-            <div class="ev-alert crisis">{{ error }}</div>
-        {% endif %}
-        
-        <form method="POST" style="margin-bottom:20px;">
-            <div class="sh">LOGIN</div>
-            <input type="text" name="username" placeholder="Username" style="width:100%; padding:10px; margin-bottom:10px; background:rgba(0,0,0,0.5); border:1px solid var(--bdr); color:white; border-radius:5px;" required>
-            <input type="password" name="password" placeholder="Passwort" style="width:100%; padding:10px; margin-bottom:15px; background:rgba(0,0,0,0.5); border:1px solid var(--bdr); color:white; border-radius:5px;" required>
-            <button type="submit" name="login" class="btn cy-b">Einloggen</button>
-        </form>
-        
-        <form method="POST">
-            <div class="sh">REGISTRIEREN</div>
-            <input type="text" name="username" placeholder="Neuer Username" style="width:100%; padding:10px; margin-bottom:10px; background:rgba(0,0,0,0.5); border:1px solid var(--bdr); color:white; border-radius:5px;" required>
-            <input type="text" name="company" placeholder="Konzern Name" style="width:100%; padding:10px; margin-bottom:10px; background:rgba(0,0,0,0.5); border:1px solid var(--bdr); color:white; border-radius:5px;" required>
-            <input type="password" name="password" placeholder="Passwort" style="width:100%; padding:10px; margin-bottom:15px; background:rgba(0,0,0,0.5); border:1px solid var(--bdr); color:white; border-radius:5px;" required>
-            <button type="submit" name="register" class="btn go-b">Neuen Konzern gründen</button>
-        </form>
+<body>
+    <div class="landing-bg">
+        <div class="grid"></div>
+        <div class="aurora-glow"></div>
     </div>
+
+    <section class="hero">
+        <div class="logo-big">AUTO⚡EMPIRE</div>
+        <p>Baue einen Weltkonzern auf, beherrsche den globalen Markt und überliste deine Rivalen in der komplexesten Automobil-Wirtschafts-Simulation des Webs.</p>
+
+        <!-- LIVE GAME PULSE -->
+        <div class="pulse-box">
+            <div class="pulse-header">
+                <div><span>🔴</span> Live Game Pulse</div>
+                <div>Global Revenue: <span style="color:var(--go)">€{{ (stats.capital / 1000000)|number_format(1) }}M</span></div>
+            </div>
+            <div class="chart-sim" id="live-chart">
+                {% for i in 1..40 %}
+                    <div class="bar" style="height: {{ range(20, 90)|random }}%"></div>
+                {% endfor %}
+            </div>
+            <div style="font-size: 10px; color: #4a6880; margin-top: 12px; display:flex; justify-content: space-between;">
+                <span>00:00 Market Cycle</span>
+                <span>Real-Time Stats powered by AI-Core</span>
+                <span>24:00 Global Trade</span>
+            </div>
+        </div>
+
+        <!-- STATS GRID -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-val">{{ stats.players }}</div>
+                <div class="stat-lbl">Aktive CEOs</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val">€{{ (stats.capital / 1000) | number_format(0, ',', '.') }}k</div>
+                <div class="stat-lbl">Marktkapitalisierung</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-lbl" style="margin-bottom:10px;">🏆 Leaderboard</div>
+                <div class="top3-list">
+                    {% for p in stats.top %}
+                        <div class="top3-item">
+                            <span>#{{ loop.index }} {{ p.company_name }}</span>
+                            <span style="color:var(--go)">€{{ (p.money / 1000) | number_format(0, ',', '.') }}k</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        {% if error %}
+            <div class="glass" style="color:var(--rd); border-color:var(--rd); padding:10px 20px; border-radius:10px; margin-bottom:20px;">⚠️ {{ error }}</div>
+        {% endif %}
+
+        <div class="cta-box">
+            <button class="btn-xl cy-b" onclick="openAuth('login')">Einloggen</button>
+            <button class="btn-xl go-b" onclick="openAuth('reg')">Imperium gründen</button>
+        </div>
+    </section>
+
+    <!-- AUTH MODAL -->
+    <div id="auth-modal" onclick="if(event.target==this) closeAuth()">
+        <div class="auth-card">
+            <div class="f-switch">
+                <button id="sw-l" class="f-sw-btn on" onclick="setMode('login')">LOGIN</button>
+                <button id="sw-r" class="f-sw-btn" onclick="setMode('reg')">REGISTER</button>
+            </div>
+
+            <form id="form-login" method="POST">
+                <div class="field"><label>CEO Benutzername</label><input type="text" name="username" class="inp" required></div>
+                <div class="field"><label>Sicherheitsschlüssel</label><input type="password" name="password" class="inp" required></div>
+                <button type="submit" name="login" class="btn-xl cy-b" style="width:100%; margin-top:10px;">Zentrale betreten</button>
+            </form>
+
+            <form id="form-reg" method="POST" style="display:none;">
+                <div class="field"><label>Dein CEO Name</label><input type="text" name="username" class="inp" required></div>
+                <div class="field"><label>Firmenname</label><input type="text" name="company" class="inp" placeholder="e.g. Neo Dynamics" required></div>
+                <div class="field"><label>Neues Passwort</label><input type="password" name="password" class="inp" required></div>
+                <button type="submit" name="register" class="btn-xl go-b" style="width:100%; margin-top:10px;">Konzern registrieren</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openAuth(m) {
+            document.getElementById('auth-modal').classList.add('open');
+            setMode(m);
+        }
+        function closeAuth() {
+            document.getElementById('auth-modal').classList.remove('open');
+        }
+        function setMode(m) {
+            const isL = m === 'login';
+            document.getElementById('form-login').style.display = isL ? 'block' : 'none';
+            document.getElementById('form-reg').style.display = isL ? 'none' : 'block';
+            document.getElementById('sw-l').classList.toggle('on', isL);
+            document.getElementById('sw-r').classList.toggle('on', !isL);
+        }
+
+        // Simulate Chart Animation
+        setInterval(() => {
+            const bars = document.querySelectorAll('.bar');
+            bars.forEach(b => {
+                if (Math.random() > 0.8) {
+                    b.style.height = (20 + Math.random() * 70) + '%';
+                }
+            });
+        }, 500);
+
+        {% if error %} openAuth('login'); {% endif %}
+    </script>
 </body>
-</html>
+</html>
