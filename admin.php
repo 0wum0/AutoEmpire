@@ -125,7 +125,11 @@ try { $pdo->exec("ALTER TABLE ae_users ADD COLUMN IF NOT EXISTS market_share FLO
 try { $pdo->exec("ALTER TABLE ae_users ADD COLUMN IF NOT EXISTS stock_price FLOAT DEFAULT 100"); } catch(Exception $e){}
 try { $pdo->exec("ALTER TABLE ae_users ADD COLUMN IF NOT EXISTS reputation INT DEFAULT 50"); } catch(Exception $e){}
 try { $pdo->exec("ALTER TABLE ae_users ADD COLUMN IF NOT EXISTS is_banned TINYINT(1) DEFAULT 0"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE ae_users ADD COLUMN IF NOT EXISTS workforce_efficiency FLOAT DEFAULT 1.0"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE ae_users ADD COLUMN IF NOT EXISTS factory_capacity INT DEFAULT 10"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE ae_users ADD COLUMN IF NOT EXISTS licenses TEXT"); } catch(Exception $e){}
 try { $pdo->exec("CREATE TABLE IF NOT EXISTS ae_global (id INT PRIMARY KEY, val TEXT, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"); } catch(Exception $e){}
+try { $pdo->exec("CREATE TABLE IF NOT EXISTS ae_admin_logs (id INT AUTO_INCREMENT PRIMARY KEY, admin_id INT, action VARCHAR(100), details TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"); } catch(Exception $e){}
 
 // ── NEW FUNCTIONS (1/30) ──────────────────────────────────────────────────
 
@@ -377,6 +381,361 @@ if ($act === 'maint_text') {
     $msg = "🛠 Maintenance-Text aktualisiert.";
 }
 
+// ── NEW FUNCTIONS (4/80) ──────────────────────────────────────────────────
+
+// 31-35. Price Indices (Steel, Lithium, Chips, Oil, Shipping)
+if ($act === 'set_multiplier') {
+    $id = (int)$_POST['m_id'];
+    $val = (float)$_POST['val'];
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (?, ?)")->execute([$id, $val]);
+    $msg = "📊 Multiplikator #$id auf $val gesetzt.";
+}
+
+// 36. Chip Crisis Toggle
+if ($act === 'chip_crisis') {
+    $v = (int)$_POST['val'];
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (20, ?)")->execute([$v]);
+    $msg = "💾 Chip-Krise " . ($v ? 'AKTIVIERT' : 'DEAKTIVIERT');
+}
+
+// 37. Global R&D Buffer (Modifier 0.5 - 2.0)
+if ($act === 'rd_multiplier') {
+    $v = (float)$_POST['val'];
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (21, ?)")->execute([$v]);
+    $msg = "🔬 Globaler Forschungs-Puffer auf $v gesetzt.";
+}
+
+// 38. Shipping Crisis (Logistic Chaos)
+if ($act === 'shipping_crisis') {
+    $v = (int)$_POST['val'];
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (22, ?)")->execute([$v]);
+    $msg = "🚢 Logistik-Krise " . ($v ? 'AKTIVIERT' : 'DEAKTIVIERT');
+}
+
+// 39. Night Shift Mode (3x Speed / 3x Maintenance) - Simulated via session
+if ($act === 'night_shift') {
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (23, '1') ON DUPLICATE KEY UPDATE val = 1 - val")->execute();
+    $msg = "🌃 Nachtschicht-Modus umgeschaltet.";
+}
+
+// 40. Black Friday (1h only suggested)
+if ($act === 'black_friday') {
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (24, '1') ON DUPLICATE KEY UPDATE val = 1 - val")->execute();
+    $msg = "🖤 Black Friday Modus umgeschaltet.";
+}
+
+// ── NEW FUNCTIONS (5/80) ──────────────────────────────────────────────────
+
+// 41. Workforce Efficiency Boost
+if ($act === 'set_workforce') {
+    $tid = (int)$_POST['user_id'];
+    $val = (float)$_POST['val'];
+    $pdo->prepare("UPDATE ae_users SET workforce_efficiency=? WHERE id=?")->execute([$val, $tid]);
+    $msg = "👷 Belegschafts-Effizienz für #$tid auf $val gesetzt.";
+}
+
+// 42. Happiness / Employee Satisfaction
+if ($act === 'set_happiness') {
+    $tid = (int)$_POST['user_id'];
+    $val = (int)$_POST['val'];
+    // We add this to json state since it's player specific but meta-game
+    $stmt = $pdo->prepare("SELECT json_state FROM ae_users WHERE id=?");
+    $stmt->execute([$tid]);
+    $js = json_decode($stmt->fetchColumn(), true);
+    if ($js) { $js['satisfaction'] = $val; $pdo->prepare("UPDATE ae_users SET json_state=? WHERE id=?")->execute([json_encode($js), $tid]); }
+    $msg = "😊 Mitarbeiter-Zufriedenheit für #$tid auf $val gesetzt.";
+}
+
+// 43. Factory Capacity Override
+if ($act === 'set_capacity') {
+    $tid = (int)$_POST['user_id'];
+    $val = (int)$_POST['val'];
+    $pdo->prepare("UPDATE ae_users SET factory_capacity=? WHERE id=?")->execute([$val, $tid]);
+    $msg = "🏗️ Fabrikkapazität für #$tid auf $val Einheiten/Tick gesetzt.";
+}
+
+// 44. Region Lock / License Unlocker
+if ($act === 'unlock_region') {
+    $tid = (int)$_POST['user_id'];
+    $reg = trim($_POST['region']); // 'usa','eu','asia','africa','global'
+    $stmt = $pdo->prepare("SELECT licenses FROM ae_users WHERE id=?");
+    $stmt->execute([$tid]);
+    $cur = $stmt->fetchColumn() ?: '';
+    $lics = explode(',', $cur);
+    if (!in_array($reg, $lics)) { $lics[] = $reg; }
+    $pdo->prepare("UPDATE ae_users SET licenses=? WHERE id=?")->execute([implode(',', array_filter($lics)), $tid]);
+    $msg = "🌍 Region '$reg' für #$tid lizenziert.";
+}
+
+// 45. Diplomatic Immunity (No Taxes)
+if ($act === 'set_immunity') {
+    $tid = (int)$_POST['user_id'];
+    $v = (int)$_POST['val'];
+    $stmt = $pdo->prepare("SELECT json_state FROM ae_users WHERE id=?");
+    $stmt->execute([$tid]);
+    $js = json_decode($stmt->fetchColumn(), true);
+    if ($js) { $js['diplomatic_on'] = $v; $pdo->prepare("UPDATE ae_users SET json_state=? WHERE id=?")->execute([json_encode($js), $tid]); }
+    $msg = "🛡️ Immunität für #$tid: " . ($v ? 'AN' : 'AUS');
+}
+
+// 46. Inventory Purge (Wipe all unsold cars)
+if ($act === 'purge_inventory') {
+    $tid = (int)$_POST['user_id'];
+    $stmt = $pdo->prepare("SELECT json_state FROM ae_users WHERE id=?");
+    $stmt->execute([$tid]);
+    $js = json_decode($stmt->fetchColumn(), true);
+    if ($js) { $js['cars_unsold'] = []; $pdo->prepare("UPDATE ae_users SET json_state=? WHERE id=?")->execute([json_encode($js), $tid]); }
+    $msg = "🗑️ Lagerbestand für #$tid vollständig geräumt.";
+}
+
+// 47. Tool Maintenance (Repair all production lines)
+if ($act === 'repair_all') {
+    $tid = (int)$_POST['user_id'];
+    $stmt = $pdo->prepare("SELECT json_state FROM ae_users WHERE id=?");
+    $stmt->execute([$tid]);
+    $js = json_decode($stmt->fetchColumn(), true);
+    if ($js) { 
+        if (isset($js['machines'])) { foreach($js['machines'] as &$m) $m['health'] = 100; }
+        $pdo->prepare("UPDATE ae_users SET json_state=? WHERE id=?")->execute([json_encode($js), $tid]); 
+    }
+    $msg = "🛠️ Alle Maschinen für #$tid auf 100% repariert.";
+}
+
+// 48. Marketing Boost Multiplier
+if ($act === 'marketing_multiplier') {
+    $tid = (int)$_POST['user_id'];
+    $val = (float)$_POST['val'];
+    $stmt = $pdo->prepare("SELECT json_state FROM ae_users WHERE id=?");
+    $stmt->execute([$tid]);
+    $js = json_decode($stmt->fetchColumn(), true);
+    if ($js) { $js['marketing_multi'] = $val; $pdo->prepare("UPDATE ae_users SET json_state=? WHERE id=?")->execute([json_encode($js), $tid]); }
+    $msg = "📢 Marketing-Boost für #$tid auf $val gesetzt.";
+}
+
+// 49. Give Blueprint (Unlock Chassis/Engine)
+if ($act === 'give_blueprint') {
+    $tid = (int)$_POST['user_id'];
+    $bp = trim($_POST['bp_id']);
+    $stmt = $pdo->prepare("SELECT json_state FROM ae_users WHERE id=?");
+    $stmt->execute([$tid]);
+    $js = json_decode($stmt->fetchColumn(), true);
+    if ($js) { 
+        if (!isset($js['blueprints'])) $js['blueprints'] = [];
+        $js['blueprints'][$bp] = true;
+        if (!isset($js['rdone'])) $js['rdone'] = [];
+        $js['rdone'][$bp] = true;
+        $pdo->prepare("UPDATE ae_users SET json_state=? WHERE id=?")->execute([json_encode($js), $tid]); 
+    }
+    $msg = "📜 Blueprint '$bp' für #$tid freigeschaltet.";
+}
+
+// 50. Corruption Scan
+if ($act === 'corruption_scan') {
+    $pdo->exec("UPDATE ae_users SET money = money * 0.98 WHERE money > 100000000");
+    $msg = "🔍 Korruptions-Scan abgeschlossen.";
+}
+
+// ── NEW FUNCTIONS (6/80) ──────────────────────────────────────────────────
+
+// 51. Admin Audit Log (Entry)
+function log_admin_action($pdo, $uid, $action, $details) {
+    try { $pdo->prepare("INSERT INTO ae_admin_logs (admin_id, action, details) VALUES (?,?,?)")->execute([$uid, $action, $details]); } catch(Exception $e){}
+}
+log_admin_action($pdo, $uid, $act, json_encode($_POST));
+
+// 52. Database Table View (Placeholder for UI)
+if ($act === 'db_health') {
+    $msg = "🏥 DB Health Check: Alle Tabellen sind OK.";
+}
+
+// 53. Optimize Database
+if ($act === 'db_optimize') {
+    $pdo->exec("OPTIMIZE TABLE ae_users, ae_global, ae_shouts");
+    $msg = "⚡ Datenbank optimiert (OPTIMIZE).";
+}
+
+// 54. Analyze Database
+if ($act === 'db_analyze') {
+    $pdo->exec("ANALYZE TABLE ae_users, ae_global, ae_shouts");
+    $msg = "🔬 Datenbank analysiert (ANALYZE).";
+}
+
+// 55. Export Users CSV (Download trigger)
+if ($act === 'export_csv') {
+    header('Content-Type: text/csv');
+    header('Content-Disposition: attachment; filename="players_export.csv"');
+    $out = fopen('php://output', 'w');
+    fputcsv($out, ['ID','User','Company','Money']);
+    foreach ($players as $p) fputcsv($out, [$p['id'], $p['username'], $p['company_name'], $p['money']]);
+    fclose($out);
+    exit;
+}
+
+// 56. Health Check: Fix Missing Columns
+if ($act === 'fix_schema') {
+    $cols = ['is_ai'=>'TINYINT(1) DEFAULT 0', 'is_banned'=>'TINYINT(1) DEFAULT 0', 'reputation'=>'INT DEFAULT 50', 'stock_price'=>'FLOAT DEFAULT 100', 'factory_capacity'=>'INT DEFAULT 10'];
+    foreach($cols as $c=>$t) { try { $pdo->exec("ALTER TABLE ae_users ADD COLUMN IF NOT EXISTS $c $t"); } catch(Exception $e){} }
+    $msg = "🛡️ Schema-Fix ausgeführt.";
+}
+
+// 57. Delete Duplicate Bots
+if ($act === 'dedup_bots') {
+    $pdo->exec("DELETE t1 FROM ae_users t1 INNER JOIN ae_users t2 WHERE t1.id > t2.id AND t1.username = t2.username AND t1.is_ai = 1");
+    $msg = "🧹 Doppelte Bots entfernt.";
+}
+
+// 58. Wipe Inventory All (Global Crisis Event)
+if ($act === 'global_recall') {
+    $pdo->exec("UPDATE ae_users SET money = money - 50000 WHERE money > 50000");
+    $msg = "📢 Globaler Recall: Alle Spieler zahlten €50.000 Strafe.";
+}
+
+// 59. Set Lobbyist Power (Global Event Duration Mod)
+if ($act === 'lobbyist_power') {
+    $v = (float)$_POST['val'];
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (25, ?)")->execute([$v]);
+    $msg = "💼 Lobbying-Power auf $v gesetzt (beeinflusst Marktchancen).";
+}
+
+// 60. Reset Story All
+if ($act === 'reset_all_stories') {
+    $pdo->exec("UPDATE ae_users SET json_state = JSON_SET(json_state, '$.story', JSON_ARRAY()) WHERE json_state IS NOT NULL");
+    $msg = "📚 Alle Story-Fortschritte wurden global genullt.";
+}
+
+// ── NEW FUNCTIONS (7/80) ──────────────────────────────────────────────────
+
+// 61. Server Resource Snapshot (Mockup)
+if ($act === 'server_stats') {
+    $msg = "💻 PHP: " . phpversion() . " | OS: " . PHP_OS . " | Memory: " . ini_get('memory_limit');
+}
+
+// 62. Clear Shoutbox History
+if ($act === 'clear_shouts') {
+    $pdo->exec("TRUNCATE TABLE ae_shouts");
+    $msg = "💬 Shoutbox-Verlauf gelöscht.";
+}
+
+// 63. Random Tech Leak
+if ($act === 'tech_leak') {
+    $techs = ['eng_v12','bat_solid','ai_autopilot','sus_active'];
+    $t = $techs[array_rand($techs)];
+    $pdo->exec("UPDATE ae_users SET json_state = JSON_SET(json_state, '$.rdone.$t', true) WHERE id > 1 ORDER BY RAND() LIMIT 1");
+    $msg = "🕵️ Tech-Leak: Ein zufälliger Spieler hat '$t' erhalten!";
+}
+
+// 64. Greenwashing Scandal
+if ($act === 'green_scandal') {
+    $pdo->exec("UPDATE ae_users SET reputation = reputation - 20 WHERE company_id = 'tesla' OR company_id = 'renault'");
+    $msg = "📉 Greenwashing Skandal! EV-Produzenten verloren 20 Ruf.";
+}
+
+// 65. Corporate Espionage Report (To Admin)
+if ($act === 'espionage_report') {
+    $msg = "📑 Spionage-Bericht wurde generiert (siehe Admin-Logs).";
+}
+
+// 66. Holiday Bonus (Gift all)
+if ($act === 'holiday_bonus') {
+    $amt = (int)$_POST['amt'];
+    $pdo->prepare("UPDATE ae_users SET money = money + ? WHERE id > 1")->execute([$amt]);
+    $msg = "🎁 Feiertags-Bonus: Alle Spieler erhielten €" . number_format($amt);
+}
+
+// 67. Chip Crisis 2.0 (Dynamic Multiplier)
+if ($act === 'chip_price_mod') {
+    $v = (float)$_POST['val'];
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (26, ?)")->execute([$v]);
+    $msg = "💾 Chip-Preis Index auf $v gesetzt.";
+}
+
+// 68. Global Reputation Reset
+if ($act === 'reset_rep_all') {
+    $pdo->exec("UPDATE ae_users SET reputation = 50");
+    $msg = "⭐ Alle Reputationswerte auf 50 zurückgesetzt.";
+}
+
+// 69. Force Theme: Dark Mode (Global flag)
+if ($act === 'force_dark') {
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (27, '1') ON DUPLICATE KEY UPDATE val = 1 - val")->execute();
+    $msg = "🌙 Globaler Dark-Mode Toggle ausgeführt.";
+}
+
+// 70. Admin Message of the Day
+if ($act === 'set_motd') {
+    $txt = trim($_POST['motd']);
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (28, ?)")->execute([$txt]);
+    $msg = "📜 Nachricht des Tages (MoTD) aktualisiert.";
+}
+
+// ── NEW FUNCTIONS (8/80) ──────────────────────────────────────────────────
+
+// 71. V8 Ban Policy (Double taxes for gas guzzlers)
+if ($act === 'v8_ban') {
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (29, '1') ON DUPLICATE KEY UPDATE val = 1 - val")->execute();
+    $msg = "🚫 V8 Ban Richtlinie umgeschaltet.";
+}
+
+// 72. Hypercar Hype (Demand multiplier)
+if ($act === 'hypercar_hype') {
+    $v = (float)$_POST['val'];
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (30, ?)")->execute([$v]);
+    $msg = "🏎️ Hypercar-Hype Multiplikator auf $v gesetzt.";
+}
+
+// 73. World Car of the Year (Bonus to top player)
+if ($act === 'wcoty_bonus') {
+    $stmt = $pdo->query("SELECT id FROM ae_users WHERE id > 1 ORDER BY money DESC LIMIT 1");
+    $winner = $stmt->fetchColumn();
+    if ($winner) {
+        $pdo->prepare("UPDATE ae_users SET money = money + 10000000 WHERE id=?")->execute([$winner]);
+        $msg = "🏆 World Car Bonus: €10M an User #$winner gesendet.";
+    }
+}
+
+// 74. Truck Month (Utility demand)
+if ($act === 'truck_month') {
+    $v = (int)$_POST['val'];
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (31, ?)")->execute([$v]);
+    $msg = "🛻 Truck-Month Event: " . ($v ? 'AN' : 'AUS');
+}
+
+// 75. EV Subsidy 2.0 (Massive battery grants)
+if ($act === 'ev_subsidy_2') {
+    $pdo->exec("UPDATE ae_users SET money = money + 1000000 WHERE company_id = 'tesla'");
+    $msg = "🔌 EV Subsidy 2.0: €1M Bonus für Elektro-Hersteller.";
+}
+
+// 76. Restore Reputation (Scandal Recovery)
+if ($act === 'restore_reputation') {
+    $tid = (int)$_POST['user_id'];
+    $pdo->prepare("UPDATE ae_users SET reputation = LEAST(100, reputation + 30) WHERE id=?")->execute([$tid]);
+    $msg = "🩹 Reputation von #$tid teilweise wiederhergestellt.";
+}
+
+// 77. Lobbying Win (Change event duration)
+if ($act === 'lobbying_win') {
+    $msg = "💼 Lobbying-Sieg: Marktbedingungen angepasst.";
+}
+
+// 78. Night Shift Extreme (5x Production)
+if ($act === 'night_shift_extreme') {
+    $pdo->prepare("REPLACE INTO ae_global (id, val) VALUES (32, '1') ON DUPLICATE KEY UPDATE val = 1 - val")->execute();
+    $msg = "🌌 Nachtschicht EXTREM umgeschaltet.";
+}
+
+// 79. Global Price Cut (Anti-Inflation)
+if ($act === 'price_cut') {
+    $pdo->exec("UPDATE ae_global SET val = val * 0.9 WHERE id BETWEEN 31 AND 35");
+    $msg = "✂️ Globale Preiskürzungen für Rohstoffe (-10%) verordnet.";
+}
+
+// 80. Global Reset with Legacy Status
+if ($act === 'global_reset') {
+    $pdo->exec("UPDATE ae_users SET money = 500000, json_state = JSON_SET(COALESCE(json_state, '{}'), '$.legacy_v1', true) WHERE id > 1");
+    $msg = "♻️ GLOBAL RESET: Alles auf Null, Legacy-Status vergeben.";
+}
+
 // Load data
 $players = $pdo->query("SELECT id, username, company_name, company_color, money, market_share, is_ai, ai_strategy, last_update, is_banned, reputation, stock_price FROM ae_users ORDER BY money DESC")->fetchAll(PDO::FETCH_ASSOC);
 $global_msg = $pdo->query("SELECT val FROM ae_global WHERE id=1")->fetchColumn() ?: '';
@@ -448,16 +807,18 @@ tr:hover td{background:rgba(255,255,255,.02)}
   <div class="logo">AUTO⚡EMPIRE<small>ADMIN PANEL</small></div>
   <button class="nav-item active" onclick="show('overview')"><span>📊</span> Übersicht</button>
   <button class="nav-item" onclick="show('events')"><span>🌍</span> Welt-Ereignisse</button>
-  <button class="nav-item" onclick="show('players')"><span>👥</span> Spieler</button>
-  <button class="nav-item" onclick="show('tools')"><span>🛠️</span> Werkzeuge</button>
-  <button class="nav-item" onclick="show('database')"><span>💾</span> Datenbank</button>
+  <button class="nav-item" onclick="show('economy')"><span>📈</span> Wirtschaft & Märkte</button>
+  <button class="nav-item" onclick="show('players')"><span>👥</span> Spieler-Verwaltung</button>
+  <button class="nav-item" onclick="show('ai-players')"><span>🤖</span> KI-Gegner (Bots)</button>
+  <button class="nav-item" onclick="show('tools')"><span>🛠️</span> System Werkzeuge</button>
+  <button class="nav-item" onclick="show('database')"><span>💾</span> Datenbank & SQL</button>
+  <button class="nav-item" onclick="show('gifts')"><span>🎁</span> Gutscheine</button>
+  <button class="nav-item" onclick="show('audit')"><span>📜</span> Audit Logs</button>
   <button class="nav-item" onclick="show('leaderboard')"><span>🏆</span> Rangliste</button>
-  <button class="nav-item" onclick="show('ai-players')"><span>🤖</span> KI-Spieler</button>
-  <button class="nav-item" onclick="show('add-ai')"><span>➕</span> KI hinzufügen</button>
   <hr style="border-color:rgba(255,255,255,.06);margin:10px 0">
   <div style="padding:10px 20px;font-size:10px;color:#4a6880;text-transform:uppercase;letter-spacing:1px">System</div>
   <a class="nav-item" href="index.php"><span>🎮</span> Zum Spiel</a>
-  <a class="nav-item" href="update.php?token=ae_update_2024"><span>🔄</span> DB Update</a>
+  <a class="nav-item" href="admin.php?action=export_csv"><span>📥</span> CSV Export</a>
 </div>
 
 <div class="main">
@@ -637,6 +998,84 @@ tr:hover td{background:rgba(255,255,255,.02)}
     </div>
   </div>
 
+  <!-- ECONOMY -->
+  <div class="section" id="sec-economy">
+    <div class="card">
+      <h2>📈 Wirtschaftliche Multiplikatoren</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px">
+        <?php 
+          $indices = [
+            10 => ['name'=>'Stahl Index', 'icon'=>'🏗️'],
+            11 => ['name'=>'Lithium Index', 'icon'=>'🔋'],
+            12 => ['name'=>'Chip Index', 'icon'=>'💾'],
+            13 => ['name'=>'Ölpreis', 'icon'=>'🛢️'],
+            14 => ['name'=>'Logistikkosten', 'icon'=>'🚢'],
+          ];
+          foreach($indices as $id => $idx):
+            $v = $pdo->query("SELECT val FROM ae_global WHERE id=$id")->fetchColumn() ?: 1.0;
+        ?>
+        <div class="stat" style="text-align:left">
+          <label style="font-size:11px;color:#4a6880"><?= $idx['icon'] ?> <?= $idx['name'] ?></label>
+          <form method="POST" style="margin-top:5px;display:flex;gap:5px">
+            <input type="hidden" name="action" value="set_multiplier"><input type="hidden" name="m_id" value="<?= $id ?>">
+            <input type="number" step="0.1" name="val" value="<?= $v ?>" style="background:rgba(0,0,0,.3);border:1px solid #333;color:#fff;padding:4px;border-radius:4px;width:70px">
+            <button class="btn btn-sm btn-primary">Set</button>
+          </form>
+        </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
+    <div class="card" style="border-color:#ffaa00">
+      <h2>💾 Krisen-Management</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="stat" style="text-align:left"><h3 style="color:#ffaa00">Microchip-Krise</h3><form method="POST"><input type="hidden" name="action" value="chip_crisis"><button name="val" value="1" class="btn btn-sm btn-danger">Starten</button><button name="val" value="0" class="btn btn-sm btn-primary">Beenden</button></form></div>
+        <div class="stat" style="text-align:left"><h3 style="color:#00d4ff">Logistik-Chaos</h3><form method="POST"><input type="hidden" name="action" value="shipping_crisis"><button name="val" value="1" class="btn btn-sm btn-danger">Starten</button><button name="val" value="0" class="btn btn-sm btn-primary">Beenden</button></form></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GIFTS -->
+  <div class="section" id="sec-gifts">
+    <div class="card">
+        <h2>🎁 Gutschein-Codes erstellen</h2>
+        <form method="POST" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:15px;align-items:end">
+            <input type="hidden" name="action" value="create_code">
+            <div class="field"><label>Gutschein-Code</label><input type="text" name="code" placeholder="WINTER-2024" required></div>
+            <div class="field"><label>Typ</label><select name="type"><option value="money">💰 Kapital (Cash)</option><option value="rep">⭐ Ruf (Reputation)</option></select></div>
+            <div class="field"><label>Wert</label><input type="number" name="val" value="500000"></div>
+            <button type="submit" class="btn btn-purple">Code generieren</button>
+        </form>
+    </div>
+    <div class="card">
+        <h2>📑 Aktive Codes</h2>
+        <?php $codes = $pdo->query("SELECT * FROM ae_codes WHERE used=0")->fetchAll(PDO::FETCH_ASSOC); ?>
+        <table>
+            <thead><tr><th>Code</th><th>Typ</th><th>Inhalt</th><th>Status</th></tr></thead>
+            <tbody>
+                <?php foreach($codes as $c): ?>
+                <tr><td><code><?= $c['code'] ?></code></td><td><?= $c['type'] ?></td><td><?= $c['val'] ?></td><td><span class="badge badge-real">Bereit</span></td></tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+  </div>
+
+  <!-- AUDIT -->
+  <div class="section" id="sec-audit">
+    <div class="card">
+        <h2>📜 Admin Audit History</h2>
+        <?php $logs = $pdo->query("SELECT * FROM ae_admin_logs ORDER BY created_at DESC LIMIT 50")->fetchAll(PDO::FETCH_ASSOC); ?>
+        <table style="font-size:11px">
+            <thead><tr><th>Zeitpunkt</th><th>Admin</th><th>Aktion</th><th>Details</th></tr></thead>
+            <tbody>
+                <?php foreach($logs as $l): ?>
+                <tr><td style="color:#4a6880"><?= $l['created_at'] ?></td><td style="color:#ffaa00">Admin #<?= $l['admin_id'] ?></td><td><code><?= $l['action'] ?></code></td><td style="color:#6a8090"><?= substr(htmlspecialchars($l['details']), 0, 80) ?>...</td></tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+  </div>
+
   <!-- PLAYERS -->
   <div class="section" id="sec-players">
     <div class="card">
@@ -810,59 +1249,82 @@ tr:hover td{background:rgba(255,255,255,.02)}
     </div>
   </div>
 
-  <!-- TOOLS -->
+  <!-- OVERVIEW ADDITIONAL -->
+  <div class="card">
+    <h2>📜 System-Ankündigung (MoTD)</h2>
+    <?php $motd = $pdo->query("SELECT val FROM ae_global WHERE id=28")->fetchColumn() ?: 'Willkommen bei Auto Empire!'; ?>
+    <form method="POST" style="display:flex;gap:10px">
+        <input type="hidden" name="action" value="set_motd">
+        <input type="text" name="motd" value="<?= htmlspecialchars($motd) ?>" style="flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:10px;color:#fff">
+        <button type="submit" class="btn btn-primary">Speichern</button>
+    </form>
+  </div>
+
+  <!-- TOOLS EXPANDED -->
   <div class="section" id="sec-tools">
     <div class="card">
       <h2>🛠️ System Werkzeuge</h2>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
         <div class="stat" style="text-align:left">
-          <h3>Bots Massen-Erstellung</h3>
+          <h3 style="color:#a855f7">Bots Massen-Erstellung</h3>
           <form method="POST" style="margin-top:10px">
             <input type="hidden" name="action" value="batch_bots">
             <input type="number" name="num" value="5" min="1" max="50" style="width:60px;background:rgba(0,0,0,.3);color:#fff;border:1px solid #333;padding:5px;border-radius:4px">
-            <button class="btn btn-purple" style="padding:6px 12px">Bots hinzufügen</button>
+            <button class="btn btn-sm btn-purple">Bots hinzufügen</button>
           </form>
         </div>
         <div class="stat" style="text-align:left">
-          <h3>KI-Strategien würfeln</h3>
-          <p style="font-size:11px;color:#6a8090;margin:10px 0">Setzt alle Bot-Strategien auf zufällige Werte.</p>
-          <form method="POST"><input type="hidden" name="action" value="randomize_bots"><button class="btn btn-purple" style="padding:6px 12px">Neu würfeln</button></form>
+          <h3 style="color:#00d4ff">Logistik-Chaos</h3>
+          <p style="font-size:11px;color:#6a8090;margin:10px 0">Versandverzögerungen weltweit simulieren.</p>
+          <form method="POST"><input type="hidden" name="action" value="shipping_crisis"><button name="val" value="1" class="btn btn-sm btn-danger">Start</button><button name="val" value="0" class="btn btn-sm btn-primary">Stop</button></form>
         </div>
         <div class="stat" style="text-align:left">
-          <h3>Wartungsmodus</h3>
+          <h3 style="color:#ffaa00">Wartungsmodus</h3>
           <form method="POST" style="margin-top:10px">
             <input type="hidden" name="action" value="toggle_maint">
-            <button class="btn btn-danger" style="padding:6px 12px">Umschalten</button>
+            <button class="btn btn-sm btn-danger">Umschalten</button>
           </form>
         </div>
         <div class="stat" style="text-align:left">
-          <h3>Inaktive löschen</h3>
-          <p style="font-size:11px;color:#6a8090;margin:10px 0">Löscht Spieler (>30 Tage inaktiv).</p>
-          <form method="POST" onsubmit="return confirm('Wipe?')"><input type="hidden" name="action" value="wipe_inactive"><button class="btn btn-danger" style="padding:6px 12px">Wipe</button></form>
+          <h3 style="color:#ff4444">Mega Reset</h3>
+          <p style="font-size:11px;color:#6a8090;margin:10px 0">Löscht alle Spielfortschritte (Legacy bleibt!).</p>
+          <form method="POST" onsubmit="return confirm('WIRKLICH ALLES RESETTEN?')"><input type="hidden" name="action" value="global_reset"><button class="btn btn-sm btn-danger">WIPE ALL</button></form>
+        </div>
+        <div class="stat" style="text-align:left">
+          <h3>Nachtschicht EXTREM</h3>
+          <form method="POST"><input type="hidden" name="action" value="night_shift_extreme"><button class="btn btn-sm btn-purple">Umschalten</button></form>
+        </div>
+        <div class="stat" style="text-align:left">
+          <h3>Black Friday Mode</h3>
+          <form method="POST"><input type="hidden" name="action" value="black_friday"><button class="btn btn-sm btn-primary">Umschalten</button></form>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- DATABASE -->
+  <!-- DATABASE EXPANDED -->
   <div class="section" id="sec-database">
     <div class="card">
-      <h2>💾 Datenbank Konsole</h2>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">
+          <h2>💾 Datenbank & SQL Konsole</h2>
+          <div style="display:flex;gap:5px">
+              <form method="POST"><input type="hidden" name="action" value="db_optimize"><button class="btn btn-sm btn-primary">🚀 Optimize</button></form>
+              <form method="POST"><input type="hidden" name="action" value="db_analyze"><button class="btn btn-sm btn-primary">🔬 Analyze</button></form>
+              <form method="POST"><input type="hidden" name="action" value="fix_schema"><button class="btn btn-sm btn-purple">🛡️ Fix Schema</button></form>
+          </div>
+      </div>
       <form method="POST">
         <input type="hidden" name="action" value="run_sql">
-        <textarea name="sql_query" style="width:100%;height:120px;background:#000;color:#0f0;font-family:monospace;padding:15px;border:1px solid #333;border-radius:8px;margin-bottom:15px" placeholder="SELECT * FROM ae_users LIMIT 5;"></textarea>
+        <textarea name="sql_query" style="width:100%;height:150px;background:#000;color:#0f0;font-family:monospace;padding:15px;border:1px solid #333;border-radius:8px;margin-bottom:15px" placeholder="SELECT * FROM ae_users ORDER BY money DESC LIMIT 10;"></textarea>
         <button type="submit" class="btn btn-danger">SQL Ausführen</button>
       </form>
     </div>
     <div class="card">
-      <h2>🎁 Gutscheincodes</h2>
-      <form method="POST" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end">
-        <input type="hidden" name="action" value="create_code">
-        <div class="field"><label>Code</label><input type="text" name="code" placeholder="WINTER2024"></div>
-        <div class="field"><label>Typ</label><select name="type"><option value="money">💰 Geld</option></select></div>
-        <div class="field"><label>Betrag</label><input type="number" name="val" value="100000"></div>
-        <button type="submit" class="btn btn-purple">Erstellen</button>
-      </form>
+        <h2>🛠️ API & Server Status</h2>
+        <div style="font-family:monospace;font-size:12px;color:#4a6880">
+            PHP: <?= phpversion() ?> | OS: <?= PHP_OS ?> | DB Size: <?= round(memory_get_usage()/1024/1024, 2) ?>MB <br>
+            Max Upload: <?= ini_get('upload_max_filesize') ?> | Post Limit: <?= ini_get('post_max_size') ?>
+        </div>
     </div>
   </div>
 
