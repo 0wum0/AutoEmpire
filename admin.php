@@ -972,6 +972,7 @@ $total_money = array_sum(array_column($players, 'money'));
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AUTO EMPIRE — Admin Panel</title>
+<style>
 :root{--sidebar-w:260px;--accent:#00d4ff;--bg:#060e18;--card-bg:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.08)}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:#c8d8e8;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
