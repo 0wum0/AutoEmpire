@@ -473,19 +473,79 @@ tr:hover td{background:rgba(255,255,255,.02)}
   $inspect_id = (int)($_GET['inspect'] ?? 0);
   $inspect_data = null;
   if ($inspect_id > 0) {
-      $stmt = $pdo->prepare("SELECT username, json_state FROM ae_users WHERE id=?");
+      $stmt = $pdo->prepare("SELECT * FROM ae_users WHERE id=?");
       $stmt->execute([$inspect_id]);
       $inspect_data = $stmt->fetch(PDO::FETCH_ASSOC);
   }
   ?>
 
   <?php if ($inspect_data): ?>
-  <div class="card" style="border-color:#a855f7">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <h2 style="color:#a855f7;margin:0">🔍 Inspektion: <?= htmlspecialchars($inspect_data['username']) ?> (#<?= $inspect_id ?>)</h2>
+  <div class="card" style="border-color:#a855f7;background:rgba(168,85,247,0.03)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <h2 style="color:#a855f7;margin:0">🔍 Management-Hub: <?= htmlspecialchars($inspect_data['username']) ?> (#<?= $inspect_id ?>)</h2>
         <a href="admin.php" class="btn btn-sm btn-danger">Schließen</a>
     </div>
-    <pre style="background:rgba(0,0,0,.4);padding:15px;border-radius:8px;font-size:11px;overflow:auto;max-height:400px;color:#a0c0ff"><?= htmlspecialchars(json_encode(json_decode($inspect_data['json_state']), JSON_PRETTY_PRINT)) ?></pre>
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <!-- Spalte 1: Account Info & Rename -->
+        <div class="stat" style="text-align:left;background:rgba(0,0,0,.2)">
+            <h4 style="color:#a855f7;margin-bottom:10px;font-size:12px">👤 Account-Daten</h4>
+            <form method="POST" style="margin-bottom:10px">
+                <input type="hidden" name="action" value="rename_user"><input type="hidden" name="user_id" value="<?= $inspect_id ?>">
+                <div class="field"><label>Username</label><input type="text" name="new_name" value="<?= htmlspecialchars($inspect_data['username']) ?>" style="padding:5px"></div>
+                <button type="submit" class="btn btn-sm btn-purple" style="margin-top:5px">Umbenennen</button>
+            </form>
+            <form method="POST" style="margin-bottom:10px">
+                <input type="hidden" name="action" value="reset_pass"><input type="hidden" name="user_id" value="<?= $inspect_id ?>">
+                <div class="field"><label>Neues Passwort</label><input type="password" name="new_pass" placeholder="Geheim..." style="padding:5px"></div>
+                <button type="submit" class="btn btn-sm btn-purple" style="margin-top:5px">Passwort setzen</button>
+            </form>
+            <form method="POST">
+                <input type="hidden" name="action" value="toggle_ban"><input type="hidden" name="user_id" value="<?= $inspect_id ?>">
+                <button type="submit" class="btn btn-sm <?= $inspect_data['is_banned'] ? 'btn-primary' : 'btn-danger' ?>" style="width:100%">
+                    <?= $inspect_data['is_banned'] ? '🔓 Account entsperren' : '🚫 Account sperren' ?>
+                </button>
+            </form>
+        </div>
+
+        <!-- Spalte 2: Firma & Markt -->
+        <div class="stat" style="text-align:left;background:rgba(0,0,0,.2)">
+            <h4 style="color:#00d4ff;margin-bottom:10px;font-size:12px">🏢 Firmen-Daten</h4>
+            <form method="POST" style="margin-bottom:10px">
+                <input type="hidden" name="action" value="rename_company"><input type="hidden" name="user_id" value="<?= $inspect_id ?>">
+                <div class="field"><label>Konzern-Name</label><input type="text" name="name" value="<?= htmlspecialchars($inspect_data['company_name']) ?>" style="padding:5px"></div>
+                <button type="submit" class="btn btn-sm btn-primary" style="margin-top:5px">Speichern</button>
+            </form>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <form method="POST">
+                    <input type="hidden" name="action" value="edit_share"><input type="hidden" name="user_id" value="<?= $inspect_id ?>">
+                    <div class="field"><label>Marktanteil (%)</label><input type="number" step="0.1" name="val" value="<?= $inspect_data['market_share'] ?>" style="padding:5px"></div>
+                    <button type="submit" class="btn btn-sm btn-primary" style="margin-top:5px;width:100%">Set</button>
+                </form>
+                <form method="POST">
+                    <input type="hidden" name="action" value="edit_rep"><input type="hidden" name="user_id" value="<?= $inspect_id ?>">
+                    <div class="field"><label>Reputation</label><input type="number" name="val" value="<?= $inspect_data['reputation'] ?>" style="padding:5px"></div>
+                    <button type="submit" class="btn btn-sm btn-primary" style="margin-top:5px;width:100%">Set</button>
+                </form>
+                <form method="POST">
+                    <input type="hidden" name="action" value="recolor_company"><input type="hidden" name="user_id" value="<?= $inspect_id ?>">
+                    <div class="field"><label>Farbe</label><input type="color" name="color" value="<?= $inspect_data['company_color'] ?>" style="padding:0;height:31px;width:100%"></div>
+                    <button type="submit" class="btn btn-sm btn-primary" style="margin-top:5px;width:100%">Färben</button>
+                </form>
+                <form method="POST">
+                    <input type="hidden" name="action" value="swap_company"><input type="hidden" name="user_id" value="<?= $inspect_id ?>">
+                    <div class="field"><label>ID (Slot)</label><input type="text" name="company_id" value="<?= $inspect_data['company_id'] ?>" style="padding:5px"></div>
+                    <button type="submit" class="btn btn-sm btn-primary" style="margin-top:5px;width:100%">Swap</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JSON View -->
+    <details style="margin-top:20px">
+        <summary style="cursor:pointer;color:#4a6880;font-size:12px;text-transform:uppercase">📄 Rohdaten (JSON) ansehen</summary>
+        <pre style="background:rgba(0,0,0,.4);padding:15px;border-radius:8px;font-size:11px;overflow:auto;max-height:300px;color:#a0c0ff;margin-top:10px"><?= htmlspecialchars(json_encode(json_decode($inspect_data['json_state']), JSON_PRETTY_PRINT)) ?></pre>
+    </details>
   </div>
   <?php endif; ?>
 
