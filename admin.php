@@ -972,56 +972,73 @@ $total_money = array_sum(array_column($players, 'money'));
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AUTO EMPIRE — Admin Panel</title>
-<style>
+:root{--sidebar-w:260px;--accent:#00d4ff;--bg:#060e18;--card-bg:rgba(255,255,255,0.04);--border:rgba(255,255,255,0.08)}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#060e18;color:#c8d8e8;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
-.sidebar{position:fixed;top:0;left:0;bottom:0;width:220px;background:rgba(0,0,0,.6);border-right:1px solid rgba(255,255,255,.08);padding:20px 0;overflow-y:auto}
-.logo{font-size:16px;font-weight:900;color:#00d4ff;text-align:center;padding:0 16px 20px;border-bottom:1px solid rgba(255,255,255,.08);letter-spacing:2px}
+body{background:var(--bg);color:#c8d8e8;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+
+/* MOBILE FIRST: Sidebar is hidden drawer by default */
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:rgba(10,18,30,0.95);backdrop-filter:blur(20px);border-right:1px solid var(--border);padding:20px 0;z-index:1000;transform:translateX(-100%);transition:transform .3s cubic-bezier(0.4, 0, 0.2, 1)}
+.sidebar.mobile-open{transform:translateX(0)}
+
+.logo{font-size:18px;font-weight:900;color:var(--accent);text-align:center;padding:0 16px 20px;border-bottom:1px solid var(--border);letter-spacing:2px}
 .logo small{display:block;color:#a855f7;font-size:10px;letter-spacing:3px;margin-top:2px}
-.nav-item{display:block;padding:10px 20px;color:#6a8090;font-size:13px;text-decoration:none;transition:all .2s;cursor:pointer;border:none;background:none;width:100%;text-align:left}
-.nav-item:hover,.nav-item.active{color:#00d4ff;background:rgba(0,212,255,.06)}
-.nav-item span{margin-right:8px}
-.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:10000;opacity:0;transition:opacity .3s}
-.modal-overlay.active{display:flex;opacity:1}
-.modal{background:#0a121e;border:1px solid rgba(0,212,255,.2);border-radius:20px;padding:40px;width:100%;max-width:400px;text-align:center;box-shadow:0 30px 60px rgba(0,0,0,.6);transform:scale(0.8);transition:transform .3s cubic-bezier(0.175, 0.885, 0.32, 1.275)}
-.modal-overlay.active .modal{transform:scale(1)}
-.modal-icon{width:80px;height:80px;background:rgba(0,212,255,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;font-size:40px;color:#00d4ff}
-.modal h3{font-size:20px;color:#fff;margin-bottom:12px}
-.modal p{color:#6a8090;font-size:14px;line-height:1.6;margin-bottom:30px}
-.modal .btn{display:inline-block;padding:12px 30px;font-weight:600}
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
-.stat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px;text-align:center}
-.stat-n{font-size:28px;font-weight:900;color:#00d4ff}
-.stat-l{font-size:11px;color:#4a6880;letter-spacing:1px;text-transform:uppercase;margin-top:4px}
-.card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:20px;margin-bottom:20px}
-.card h2{font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#4a6880;margin-bottom:16px}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;padding:8px 12px;color:#4a6880;font-size:11px;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.08)}
-td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04)}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:rgba(255,255,255,.02)}
+
+.nav-item{display:block;padding:12px 24px;color:#6a8090;font-size:14px;text-decoration:none;transition:all .2s;cursor:pointer;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover,.nav-item.active{color:var(--accent);background:rgba(0,212,255,.06);border-left:3px solid var(--accent)}
+.nav-item span{margin-right:12px;font-size:16px}
+
+.main{padding:20px;transition:margin .3s}
+
+/* TOPBAR & HAMBURGER */
+.topbar{display:flex;align-items:center;gap:15px;margin-bottom:24px;background:rgba(0,0,0,0.2);padding:15px;border-radius:12px;border:1px solid var(--border)}
+.topbar h1{font-size:18px;font-weight:900;color:#fff;flex:1}
+.menu-btn{display:flex;background:var(--card-bg);border:1px solid var(--border);color:#fff;padding:10px;border-radius:8px;cursor:pointer;font-size:20px}
+
+/* DESKTOP: Sidebar is visible fixed */
+@media (min-width: 1024px) {
+    .sidebar{transform:translateX(0);background:rgba(0,0,0,0.4)}
+    .main{margin-left:var(--sidebar-w);padding:40px}
+    .menu-btn{display:none}
+}
+
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.stat{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:20px;text-align:center;backdrop-filter:blur(5px)}
+.stat-n{font-size:32px;font-weight:900;color:var(--accent)}
+.stat-l{font-size:11px;color:#4a6880;letter-spacing:1px;text-transform:uppercase;margin-top:6px}
+
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:24px;overflow-x:auto}
+.card h2{font-size:14px;letter-spacing:2px;text-transform:uppercase;color:#4a6880;margin-bottom:20px;display:flex;align-items:center;gap:10px}
+
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:600px}
+th{text-align:left;padding:12px;color:#4a6880;font-size:11px;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+td{padding:14px 12px;border-bottom:1px solid rgba(255,255,255,.03)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;border:none;text-decoration:none}
+.btn-primary{background:linear-gradient(45deg, #00d4ff, #008fb3);color:#fff}
+.btn-purple{background:linear-gradient(45deg, #a855f7, #7e22ce);color:#fff}
+.btn-danger{background:rgba(255,68,68,0.1);color:#ff4444;border:1px solid rgba(255,68,68,0.2)}
+.btn-danger:hover{background:#ff4444;color:#fff}
+.btn-sm{padding:6px 12px;font-size:11px}
+
+.section{display:none;animation:fadeIn .4s ease}
+.section.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.alert{padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:13px}
+.alert-ok {background:rgba(0,200,80,.1);border:1px solid rgba(0,200,80,.3);color:#00d490}
+.alert-err{background:rgba(220,50,50,.1);border:1px solid rgba(220,50,50,.3);color:#ff6666}
+
 .badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700}
 .badge-ai{background:rgba(168,85,247,.15);color:#a855f7;border:1px solid rgba(168,85,247,.3)}
 .badge-real{background:rgba(0,212,255,.1);color:#00d4ff;border:1px solid rgba(0,212,255,.2)}
 .badge-admin{background:rgba(255,170,0,.15);color:#ffaa00;border:1px solid rgba(255,170,0,.3)}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.field{display:flex;flex-direction:column;gap:5px}
+
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:15px}
 .field label{font-size:11px;color:#4a6880;letter-spacing:1px;text-transform:uppercase}
-.field input,.field select{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:9px 12px;color:#fff;font-size:13px;outline:none}
-.field input:focus,.field select:focus{border-color:#00d4ff}
-.btn{padding:10px 20px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.5px}
-.btn-primary{background:linear-gradient(135deg,#00d4ff,#0099cc);color:#000}
-.btn-purple{background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff}
-.btn-danger{background:rgba(220,50,50,.2);color:#ff6666;border:1px solid rgba(220,50,50,.3)}
-.btn-sm{padding:5px 12px;font-size:11px}
-.btn:hover{opacity:.85;transform:translateY(-1px)}
-.alert{padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:13px}
-.alert-ok {background:rgba(0,200,80,.1);border:1px solid rgba(0,200,80,.3);color:#00d490}
-.alert-err{background:rgba(220,50,50,.1);border:1px solid rgba(220,50,50,.3);color:#ff6666}
+.field input,.field select,.field textarea{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:12px;color:#fff;font-size:13px;outline:none;width:100%}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+
 .money{font-family:monospace;color:#00d450;font-weight:700}
-.section{display:none}
-.section.active{display:block}
-.color-dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:middle}
 .strategy-badge{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600}
 .s-aggr{background:rgba(255,68,68,.15);color:#ff6666}
 .s-pass{background:rgba(100,180,100,.15);color:#88cc88}
@@ -1048,6 +1065,15 @@ function show(id, event) {
           btn.classList.add('active');
       }
   });
+
+  // Auto-close on mobile
+  if (window.innerWidth < 1024) {
+      document.getElementById('sidebar').classList.remove('mobile-open');
+  }
+}
+
+function toggleMenu() {
+    document.getElementById('sidebar').classList.toggle('mobile-open');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1071,8 +1097,8 @@ function closeModal() {
     </div>
 </div>
 
-<div class="sidebar">
-  <div class="logo">AUTO⚡EMPIRE<small>ADMIN PANEL</small></div>
+<div class="sidebar" id="sidebar">
+  <div class="logo">AUTO⚡EMPIRE<small>ADMIN PANEL v13</small></div>
   <button class="nav-item" onclick="show('overview', event)"><span>📊</span> Übersicht</button>
   <button class="nav-item" onclick="show('events', event)"><span>🌍</span> Welt-Ereignisse</button>
   <button class="nav-item" onclick="show('economy', event)"><span>📈</span> Wirtschaft & Märkte</button>
@@ -1091,8 +1117,9 @@ function closeModal() {
 
 <div class="main">
   <div class="topbar">
-    <h1>⚡ Auto Empire Admin Panel</h1>
-    <a href="index.php" style="color:#4a6880;text-decoration:none;font-size:13px">← Zum Spiel</a>
+    <button class="menu-btn" onclick="toggleMenu()">☰</button>
+    <h1>⚡ Admin Dashboard</h1>
+    <a href="index.php" class="btn btn-sm btn-primary" style="font-size:10px">🏠 Zurück</a>
   </div>
 
   <?php if ($msg): ?>
